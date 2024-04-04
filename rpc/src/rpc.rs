@@ -105,6 +105,10 @@ struct EthGetBlockByNumberResult {
     state_root: H256,
     timestamp: U256,
     withdrawals: Vec<Withdrawal>,
+    // Cancun constants
+    parent_beacon_block_root: H256,
+    block_gas_used: U256,
+    excess_blob_gas: U256,
 }
 
 #[derive(Deserialize, Debug)]
@@ -301,6 +305,10 @@ impl From<RpcBlockMetadata> for OtherBlockData {
             block_base_fee: block_by_number.result.base_fee_per_gas,
             block_gas_used: block_by_number.result.gas_used,
             block_bloom: bloom,
+            // Cancun fields
+            parent_beacon_block_root: block_by_number.result.parent_beacon_block_root,
+            block_blob_gas_used: block_by_number.result.block_gas_used,
+            block_excess_blob_gas: block_by_number.result.excess_blob_gas,
         };
 
         let withdrawals = block_by_number

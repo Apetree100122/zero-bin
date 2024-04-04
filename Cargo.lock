@@ -1036,8 +1036,8 @@ dependencies = [
 
 [[package]]
 name = "evm_arithmetization"
-version = "0.1.2"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=develop#81b5ef2088e4707ee173f8eea95e50b96237a227"
+version = "0.1.1"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#4f3e858a3bb7a146cd40131d2e57be9858d5bb0f"
 dependencies = [
  "anyhow",
  "bytes",
@@ -1929,8 +1929,8 @@ dependencies = [
 
 [[package]]
 name = "mpt_trie"
-version = "0.2.0"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=develop#81b5ef2088e4707ee173f8eea95e50b96237a227"
+version = "0.1.1"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#4f3e858a3bb7a146cd40131d2e57be9858d5bb0f"
 dependencies = [
  "bytes",
  "enum-as-inner",
@@ -2481,8 +2481,8 @@ dependencies = [
 
 [[package]]
 name = "proof_gen"
-version = "0.1.2"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=develop#81b5ef2088e4707ee173f8eea95e50b96237a227"
+version = "0.1.1"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#4f3e858a3bb7a146cd40131d2e57be9858d5bb0f"
 dependencies = [
  "ethereum-types",
  "evm_arithmetization",
@@ -3091,9 +3091,9 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "starky"
-version = "0.3.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acf2fe03f53197fbd5e2f2e5fbb809f8e953881cc729261b55f71134323bbfd6"
+checksum = "24e0a1eec739c7a67cb1c6f916c0b7bf2d281cf2edb35d3db5caa6989090133e"
 dependencies = [
  "ahash",
  "anyhow",
@@ -3434,8 +3434,8 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "trace_decoder"
-version = "0.2.0"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=develop#81b5ef2088e4707ee173f8eea95e50b96237a227"
+version = "0.1.1"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#4f3e858a3bb7a146cd40131d2e57be9858d5bb0f"
 dependencies = [
  "bytes",
  "ciborium",
