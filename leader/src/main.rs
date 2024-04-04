@@ -69,6 +69,7 @@ async fn main() -> Result<()> {
             checkpoint_block_number,
             previous_proof,
             proof_output_path,
+            max_cpu_len_log,
         } => {
             let previous_proof = get_previous_proof(previous_proof)?;
 
@@ -77,6 +78,7 @@ async fn main() -> Result<()> {
                 &rpc_url,
                 block_number,
                 checkpoint_block_number,
+                max_cpu_len_log,
                 previous_proof,
                 proof_output_path,
             )

@@ -44,6 +44,9 @@ pub(crate) enum Command {
         /// stdout.
         #[arg(long, short = 'o', value_hint = ValueHint::FilePath)]
         proof_output_path: Option<PathBuf>,
+        /// The log of the max number of CPU cycles per proof.
+        #[arg(short, default_value_t = 20)]
+        max_cpu_len_log: usize,
     },
     /// Reads input from HTTP and writes output to a directory.
     Http {

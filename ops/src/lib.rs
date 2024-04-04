@@ -4,20 +4,20 @@ use paladin::{
     registry, RemoteExecute,
 };
 use proof_gen::{
-    proof_gen::{generate_agg_proof, generate_block_proof},
+    proof_gen::{generate_agg_proof, generate_block_proof, generate_transaction_agg_proof},
     proof_types::{AggregatableProof, GeneratedAggProof, GeneratedBlockProof},
 };
 use serde::{Deserialize, Serialize};
-use trace_decoder::types::TxnProofGenIR;
+use trace_decoder::types::AllData;
 
 registry!();
 
 #[derive(Deserialize, Serialize, RemoteExecute)]
-pub struct TxProof;
+pub struct SegmentProof;
 
 #[cfg(not(feature = "test_only"))]
-impl Operation for TxProof {
-    type Input = TxnProofGenIR;
+impl Operation for SegmentProof {
+    type Input = AllData;
     type Output = proof_gen::proof_types::AggregatableProof;
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
@@ -57,6 +57,21 @@ impl Monoid for AggProof {
     fn empty(&self) -> Self::Elem {
         // Expect that empty blocks are padded.
         unimplemented!("empty agg proof")
+    }
+}
+
+#[derive(Deserialize, Serialize, RemoteExecute)]
+pub struct FullTxnProof;
+
+impl Operation for FullTxnProof {
+    type Input = (Option<GeneratedBlockProof>, GeneratedAggProof);
+    type Output = GeneratedAggProof;
+
+    fn execute(&self, input: Self::Input) -> Result<Self::Output> {
+        Ok(
+            generate_transaction_agg_proof(p_state(), input.0.as_ref(), &input.1)
+                .map_err(FatalError::from)?,
+        )
     }
 }
 

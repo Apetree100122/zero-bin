@@ -19,9 +19,9 @@ futures = "0.3.29"
 
 # zk-evm dependencies
 plonky2 = "0.2.0"
-evm_arithmetization = "0.1.2"
-trace_decoder = "0.2.0"
-proof_gen = "0.1.2"
+evm_arithmetization = { path = "../zk_evm/evm_arithmetization" }
+trace_decoder = { path = "../zk_evm/trace_decoder" }
+proof_gen =  { path = "../zk_evm/proof_gen" }
 
 [workspace.package]
 edition = "2021"

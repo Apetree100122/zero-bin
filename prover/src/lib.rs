@@ -2,7 +2,6 @@ use anyhow::Result;
 use ethereum_types::U256;
 #[cfg(feature = "test_only")]
 use futures::stream::TryStreamExt;
-use ops::TxProof;
 use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
@@ -34,8 +33,19 @@ impl ProverInput {
     pub async fn prove(
         self,
         runtime: &Runtime,
+        max_cpu_len_log: usize,
         previous: Option<PlonkyProofIntern>,
     ) -> Result<GeneratedBlockProof> {
+        use anyhow::Error;
+        use evm_arithmetization::{
+            generation::SegmentData,
+            prover::{generate_all_data_segments, GenerationSegmentData},
+        };
+        use futures::stream::FuturesOrdered;
+        use ops::{FullTxnProof, SegmentProof};
+        use plonky2::field::goldilocks_field::GoldilocksField;
+        use trace_decoder::types::AllData;
+
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
 
@@ -45,9 +55,32 @@ impl ProverInput {
             other_data.clone(),
         )?;
 
-        let agg_proof = IndexedStream::from(txs)
-            .map(&TxProof)
-            .fold(&ops::AggProof)
+        // Generate segment data.
+        type F = GoldilocksField;
+        let mut txn_proofs = vec![];
+
+        let mut cur_data = vec![];
+        let tx_proof_futs: FuturesOrdered<_> = txs
+            .iter()
+            .map(|txn| {
+                let generated_data =
+                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
+                        .unwrap_or(vec![GenerationSegmentData::default()]);
+                cur_data = generated_data
+                    .iter()
+                    .map(|&d| (*txn, max_cpu_len_log, d))
+                    .collect();
+                IndexedStream::from(cur_data.clone())
+                    .map(&SegmentProof)
+                    .fold(&ops::AggProof)
+                    .run(runtime)
+            })
+            .collect();
+
+        let txn_proofs = futures::TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
+
+        let agg_proof = IndexedStream::from(txn_proofs)
+            .map(&FullTxnProof)
             .run(runtime)
             .await?;
 
@@ -57,7 +90,7 @@ impl ProverInput {
                 intern: p,
             });
 
-            let block_proof = paladin::directive::Literal(proof)
+            let block_proof = paladin::directive::Literal(agg_proof)
                 .map(&ops::BlockProof { prev })
                 .run(runtime)
                 .await?;
@@ -67,6 +100,7 @@ impl ProverInput {
         } else {
             anyhow::bail!("AggProof is is not GeneratedAggProof")
         }
+        Err(Error::msg("hello"))
     }
 
     #[cfg(feature = "test_only")]
