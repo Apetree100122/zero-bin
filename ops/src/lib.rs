@@ -32,13 +32,16 @@ impl Operation for SegmentProof {
 }
 
 #[cfg(feature = "test_only")]
-impl Operation for TxProof {
-    type Input = TxnProofGenIR;
+impl Operation for SegmentProof {
+    type Input = AllData;
     type Output = ();
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
-        evm_arithmetization::prover::testing::simulate_execution::<proof_gen::types::Field>(input)
-            .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
+        evm_arithmetization::prover::testing::simulate_execution::<proof_gen::types::Field>(
+            input.0,
+            Some(input.1),
+        )
+        .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
 
         Ok(())
     }

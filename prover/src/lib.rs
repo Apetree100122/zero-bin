@@ -1,6 +1,5 @@
 use anyhow::Result;
 use ethereum_types::U256;
-#[cfg(feature = "test_only")]
 use futures::stream::TryStreamExt;
 use paladin::{
     directive::{Directive, IndexedStream},
@@ -73,7 +72,7 @@ impl ProverInput {
             })
             .collect();
 
-        let txn_proofs = futures::TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
+        let txn_proofs = TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
         info!("got first aggreg");
         let mut txn_all_proofs = Vec::with_capacity(txn_proofs.len() + 1);
         txn_all_proofs.push(AggregatableTxnProof::Agg(None));
@@ -120,8 +119,14 @@ impl ProverInput {
     pub async fn prove(
         self,
         runtime: &Runtime,
+        max_cpu_len_log: usize,
         _previous: Option<PlonkyProofIntern>,
     ) -> Result<GeneratedBlockProof> {
+        use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
+        use futures::stream::FuturesOrdered;
+        use ops::SegmentProof;
+        use plonky2::field::goldilocks_field::GoldilocksField;
+
         let block_number = self.get_block_number();
         info!("Testing witness generation for block {block_number}.");
 
@@ -131,12 +136,26 @@ impl ProverInput {
             other_data.clone(),
         )?;
 
-        IndexedStream::from(txs)
-            .map(&TxProof)
-            .run(runtime)
-            .await?
-            .try_collect::<Vec<_>>()
-            .await?;
+        type F = GoldilocksField;
+        let mut cur_data = vec![];
+        let tx_proof_futs: FuturesOrdered<_> = txs
+            .iter()
+            .map(|txn| {
+                let generated_data =
+                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
+                        .unwrap_or(vec![GenerationSegmentData::default()]);
+                info!("Generated all data");
+                cur_data = generated_data
+                    .iter()
+                    .map(|d| (txn.clone(), max_cpu_len_log, d.clone()))
+                    .collect();
+                IndexedStream::from(cur_data.clone())
+                    .map(&SegmentProof)
+                    .run(runtime)
+            })
+            .collect();
+
+        let _ = TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
 
         info!("Successfully generated witness for block {block_number}.");
 
