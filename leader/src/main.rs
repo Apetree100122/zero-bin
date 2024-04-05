@@ -47,11 +47,18 @@ async fn main() -> Result<()> {
     let runtime = Runtime::from_config(&args.paladin, register()).await?;
 
     match args.command {
-        Command::Stdio { previous_proof } => {
+        Command::Stdio {
+            previous_proof,
+            max_cpu_len_log,
+        } => {
             let previous_proof = get_previous_proof(previous_proof)?;
-            stdio::stdio_main(runtime, previous_proof).await?;
+            stdio::stdio_main(runtime, previous_proof, max_cpu_len_log).await?;
         }
-        Command::Http { port, output_dir } => {
+        Command::Http {
+            port,
+            output_dir,
+            max_cpu_len_log,
+        } => {
             // check if output_dir exists, is a directory, and is writable
             let output_dir_metadata = std::fs::metadata(&output_dir);
             if output_dir_metadata.is_err() {
@@ -61,7 +68,7 @@ async fn main() -> Result<()> {
                 panic!("output-dir is not a writable directory");
             }
 
-            http::http_main(runtime, port, output_dir).await?;
+            http::http_main(runtime, port, output_dir, max_cpu_len_log).await?;
         }
         Command::Jerigon {
             rpc_url,

@@ -5,7 +5,9 @@ use paladin::{
 };
 use proof_gen::{
     proof_gen::{generate_agg_proof, generate_block_proof, generate_transaction_agg_proof},
-    proof_types::{AggregatableProof, GeneratedAggProof, GeneratedBlockProof},
+    proof_types::{
+        AggregatableProof, AggregatableTxnProof, GeneratedAggProof, GeneratedBlockProof,
+    },
 };
 use serde::{Deserialize, Serialize};
 use trace_decoder::types::AllData;
@@ -60,18 +62,41 @@ impl Monoid for AggProof {
     }
 }
 
+fn generate_txn_agg_proof(
+    a: AggregatableTxnProof,
+    b: AggregatableTxnProof,
+) -> Result<AggregatableTxnProof> {
+    match a {
+        AggregatableTxnProof::Txn(_) => Err(paladin::operation::OperationError::Fatal {
+            err: core::fmt::Error.into(),
+            strategy: FatalStrategy::Terminate,
+        }),
+        AggregatableTxnProof::Agg(block) => match b {
+            AggregatableTxnProof::Txn(agg) => {
+                let proof = generate_transaction_agg_proof(p_state(), block.as_ref(), &agg)
+                    .map_err(FatalError::from)?;
+                Ok(AggregatableTxnProof::Agg(Some(proof)))
+            }
+            AggregatableTxnProof::Agg(_) => Err(paladin::operation::OperationError::Fatal {
+                err: core::fmt::Error.into(),
+                strategy: FatalStrategy::Terminate,
+            }),
+        },
+    }
+}
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct FullTxnProof;
 
-impl Operation for FullTxnProof {
-    type Input = (Option<GeneratedBlockProof>, GeneratedAggProof);
-    type Output = GeneratedAggProof;
+impl Monoid for FullTxnProof {
+    type Elem = AggregatableTxnProof;
 
-    fn execute(&self, input: Self::Input) -> Result<Self::Output> {
-        Ok(
-            generate_transaction_agg_proof(p_state(), input.0.as_ref(), &input.1)
-                .map_err(FatalError::from)?,
-        )
+    fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
+        Ok(generate_txn_agg_proof(a, b).map_err(FatalError::from)?)
+    }
+
+    fn empty(&self) -> Self::Elem {
+        // Expect that empty blocks are padded.
+        unimplemented!("empty txn agg proof")
     }
 }
 

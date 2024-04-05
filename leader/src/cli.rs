@@ -25,6 +25,8 @@ pub(crate) enum Command {
         /// The previous proof output.
         #[arg(long, short = 'f', value_hint = ValueHint::FilePath)]
         previous_proof: Option<PathBuf>,
+        #[arg(short, default_value_t = 20)]
+        max_cpu_len_log: usize,
     },
     /// Reads input from a Jerigon node and writes output to stdout.
     Jerigon {
@@ -56,5 +58,7 @@ pub(crate) enum Command {
         /// The directory to which output should be written.
         #[arg(short, long, value_hint = ValueHint::DirPath)]
         output_dir: PathBuf,
+        #[arg(short, default_value_t = 20)]
+        max_cpu_len_log: usize,
     },
 }

@@ -36,15 +36,11 @@ impl ProverInput {
         max_cpu_len_log: usize,
         previous: Option<PlonkyProofIntern>,
     ) -> Result<GeneratedBlockProof> {
-        use anyhow::Error;
-        use evm_arithmetization::{
-            generation::SegmentData,
-            prover::{generate_all_data_segments, GenerationSegmentData},
-        };
+        use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
         use futures::stream::FuturesOrdered;
         use ops::{FullTxnProof, SegmentProof};
         use plonky2::field::goldilocks_field::GoldilocksField;
-        use trace_decoder::types::AllData;
+        use proof_gen::proof_types::{AggregatableProof, AggregatableTxnProof};
 
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
@@ -57,7 +53,6 @@ impl ProverInput {
 
         // Generate segment data.
         type F = GoldilocksField;
-        let mut txn_proofs = vec![];
 
         let mut cur_data = vec![];
         let tx_proof_futs: FuturesOrdered<_> = txs
@@ -66,9 +61,10 @@ impl ProverInput {
                 let generated_data =
                     generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
                         .unwrap_or(vec![GenerationSegmentData::default()]);
+                info!("Generated all data");
                 cur_data = generated_data
                     .iter()
-                    .map(|&d| (*txn, max_cpu_len_log, d))
+                    .map(|d| (txn.clone(), max_cpu_len_log, d.clone()))
                     .collect();
                 IndexedStream::from(cur_data.clone())
                     .map(&SegmentProof)
@@ -78,29 +74,46 @@ impl ProverInput {
             .collect();
 
         let txn_proofs = futures::TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
+        info!("got first aggreg");
+        let mut txn_all_proofs = Vec::with_capacity(txn_proofs.len() + 1);
+        txn_all_proofs.push(AggregatableTxnProof::Agg(None));
 
-        let agg_proof = IndexedStream::from(txn_proofs)
-            .map(&FullTxnProof)
+        let txn_proofs: Vec<AggregatableTxnProof> = txn_proofs
+            .iter()
+            .map(|p| match p {
+                AggregatableProof::Txn(_) => panic!("All proofs should now be aggregations"),
+                AggregatableProof::Agg(agg) => AggregatableTxnProof::Txn(agg.clone()),
+            })
+            .collect();
+        txn_all_proofs.extend(txn_proofs);
+
+        let agg_proof = IndexedStream::from(txn_all_proofs)
+            .fold(&FullTxnProof)
             .run(runtime)
             .await?;
 
-        if let proof_gen::proof_types::AggregatableProof::Agg(proof) = agg_proof {
+        if let proof_gen::proof_types::AggregatableTxnProof::Agg(proof) = agg_proof {
             let prev = previous.map(|p| GeneratedBlockProof {
                 b_height: block_number.as_u64() - 1,
                 intern: p,
             });
 
-            let block_proof = paladin::directive::Literal(agg_proof)
-                .map(&ops::BlockProof { prev })
-                .run(runtime)
-                .await?;
+            let block_proof = if let Some(p) = proof {
+                let block_proof = paladin::directive::Literal(p)
+                    .map(&ops::BlockProof { prev })
+                    .run(runtime)
+                    .await?;
 
-            info!("Successfully proved block {block_number}");
+                info!("Successfully proved block {block_number}");
+                block_proof
+            } else {
+                anyhow::bail!("AggProof is None")
+            };
+
             Ok(block_proof.0)
         } else {
             anyhow::bail!("AggProof is is not GeneratedAggProof")
         }
-        Err(Error::msg("hello"))
     }
 
     #[cfg(feature = "test_only")]
