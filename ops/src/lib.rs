@@ -63,22 +63,21 @@ impl Monoid for AggProof {
     }
 }
 
-pub fn generate_txn_agg_proof(
-    a: Option<AggregatableProof>,
-    b: AggregatableProof,
-) -> Result<AggregatableProof> {
-    match (a, b) {
-        (None, AggregatableProof::Agg(b_agg)) => {
-            let p = generate_transaction_agg_proof(p_state(), None, &b_agg)
-                .map_err(|e| paladin::operation::OperationError::from(FatalError::from(e)))?;
-            Ok(AggregatableProof::Agg(p))
-        }
-        (Some(AggregatableProof::Agg(a_agg)), AggregatableProof::Agg(b_agg)) => {
-            let p = generate_transaction_agg_proof(p_state(), Some(&a_agg), &b_agg)
-                .map_err(|e| paladin::operation::OperationError::from(FatalError::from(e)))?;
-            Ok(AggregatableProof::Agg(p))
-        }
-        _ => panic!("Transaction proofs should be aggregations."),
+#[derive(Deserialize, Serialize, RemoteExecute)]
+pub struct TxnAggProof;
+
+impl Monoid for TxnAggProof {
+    type Elem = AggregatableProof;
+
+    fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
+        let result = generate_transaction_agg_proof(p_state(), &a, &b).map_err(FatalError::from)?;
+
+        Ok(result.into())
+    }
+
+    fn empty(&self) -> Self::Elem {
+        // Expect that empty blocks are padded.
+        unimplemented!("empty agg proof")
     }
 }
 

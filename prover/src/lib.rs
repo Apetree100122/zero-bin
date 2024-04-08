@@ -37,7 +37,7 @@ impl ProverInput {
     ) -> Result<GeneratedBlockProof> {
         use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
         use futures::stream::FuturesOrdered;
-        use ops::{generate_txn_agg_proof, SegmentProof};
+        use ops::SegmentProof;
         use plonky2::field::goldilocks_field::GoldilocksField;
 
         let block_number = self.get_block_number();
@@ -72,12 +72,12 @@ impl ProverInput {
             .collect();
         let txn_proofs = TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
 
-        let mut txn_agg_proof = generate_txn_agg_proof(None, txn_proofs[0].clone())?;
-        for txn in &txn_proofs[1..] {
-            txn_agg_proof = generate_txn_agg_proof(Some(txn_agg_proof), txn.clone())?;
-        }
+        let final_txn_proof = IndexedStream::from(txn_proofs)
+            .fold(&ops::TxnAggProof)
+            .run(runtime)
+            .await?;
 
-        if let proof_gen::proof_types::AggregatableProof::Agg(proof) = txn_agg_proof {
+        if let proof_gen::proof_types::AggregatableProof::Agg(proof) = final_txn_proof {
             let prev = previous.map(|p| GeneratedBlockProof {
                 b_height: block_number.as_u64() - 1,
                 intern: p,
