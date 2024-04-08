@@ -197,7 +197,6 @@ impl ProverStateManager {
     fn txn_proof_on_demand(
         &self,
         input: TxnProofGenIR,
-        max_cpu_len_log: usize,
         segment_data: &mut GenerationSegmentData,
     ) -> anyhow::Result<GeneratedTxnProof> {
         let config = StarkConfig::standard_fast_config();
@@ -207,7 +206,6 @@ impl ProverStateManager {
             &all_stark,
             &config,
             input.clone(),
-            max_cpu_len_log,
             segment_data,
             &mut TimingTree::default(),
             None,
@@ -228,14 +226,12 @@ impl ProverStateManager {
     fn txn_proof_monolithic(
         &self,
         input: TxnProofGenIR,
-        max_cpu_len_log: usize,
         segment_data: &mut GenerationSegmentData,
     ) -> anyhow::Result<GeneratedTxnProof> {
         let p_out = p_state().state.prove_segment(
             &AllStark::default(),
             &StarkConfig::standard_fast_config(),
             input.clone(),
-            max_cpu_len_log,
             segment_data,
             &mut TimingTree::default(),
             None,
@@ -258,16 +254,16 @@ impl ProverStateManager {
     ///   [`TableLoadStrategy::OnDemand`], the table circuits are loaded as
     ///   needed.
     pub fn generate_txn_proof(&self, input: AllData) -> anyhow::Result<GeneratedTxnProof> {
-        let (generation_inputs, max_cpu_len_log, mut segment_data) = input;
+        let (generation_inputs, mut segment_data) = input;
 
         match self.persistence {
             CircuitPersistence::None | CircuitPersistence::Disk(TableLoadStrategy::Monolithic) => {
                 info!("using monolithic circuit {:?}", self);
-                self.txn_proof_monolithic(generation_inputs, max_cpu_len_log, &mut segment_data)
+                self.txn_proof_monolithic(generation_inputs.clone(), &mut segment_data)
             }
             CircuitPersistence::Disk(TableLoadStrategy::OnDemand) => {
                 info!("using on demand circuit {:?}", self);
-                self.txn_proof_on_demand(generation_inputs, max_cpu_len_log, &mut segment_data)
+                self.txn_proof_on_demand(generation_inputs.clone(), &mut segment_data)
             }
         }
     }

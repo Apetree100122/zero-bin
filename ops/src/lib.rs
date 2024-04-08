@@ -5,9 +5,7 @@ use paladin::{
 };
 use proof_gen::{
     proof_gen::{generate_agg_proof, generate_block_proof, generate_transaction_agg_proof},
-    proof_types::{
-        AggregatableProof, AggregatableTxnProof, GeneratedAggProof, GeneratedBlockProof,
-    },
+    proof_types::{AggregatableProof, GeneratedAggProof, GeneratedBlockProof},
 };
 use serde::{Deserialize, Serialize};
 use trace_decoder::types::AllData;
@@ -65,41 +63,22 @@ impl Monoid for AggProof {
     }
 }
 
-fn generate_txn_agg_proof(
-    a: AggregatableTxnProof,
-    b: AggregatableTxnProof,
-) -> Result<AggregatableTxnProof> {
-    match a {
-        AggregatableTxnProof::Txn(_) => Err(paladin::operation::OperationError::Fatal {
-            err: core::fmt::Error.into(),
-            strategy: FatalStrategy::Terminate,
-        }),
-        AggregatableTxnProof::Agg(block) => match b {
-            AggregatableTxnProof::Txn(agg) => {
-                let proof = generate_transaction_agg_proof(p_state(), block.as_ref(), &agg)
-                    .map_err(FatalError::from)?;
-                Ok(AggregatableTxnProof::Agg(Some(proof)))
-            }
-            AggregatableTxnProof::Agg(_) => Err(paladin::operation::OperationError::Fatal {
-                err: core::fmt::Error.into(),
-                strategy: FatalStrategy::Terminate,
-            }),
-        },
-    }
-}
-#[derive(Deserialize, Serialize, RemoteExecute)]
-pub struct FullTxnProof;
-
-impl Monoid for FullTxnProof {
-    type Elem = AggregatableTxnProof;
-
-    fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        Ok(generate_txn_agg_proof(a, b).map_err(FatalError::from)?)
-    }
-
-    fn empty(&self) -> Self::Elem {
-        // Expect that empty blocks are padded.
-        unimplemented!("empty txn agg proof")
+pub fn generate_txn_agg_proof(
+    a: Option<AggregatableProof>,
+    b: AggregatableProof,
+) -> Result<AggregatableProof> {
+    match (a, b) {
+        (None, AggregatableProof::Agg(b_agg)) => {
+            let p = generate_transaction_agg_proof(p_state(), None, &b_agg)
+                .map_err(|e| paladin::operation::OperationError::from(FatalError::from(e)))?;
+            Ok(AggregatableProof::Agg(p))
+        }
+        (Some(AggregatableProof::Agg(a_agg)), AggregatableProof::Agg(b_agg)) => {
+            let p = generate_transaction_agg_proof(p_state(), Some(&a_agg), &b_agg)
+                .map_err(|e| paladin::operation::OperationError::from(FatalError::from(e)))?;
+            Ok(AggregatableProof::Agg(p))
+        }
+        _ => panic!("Transaction proofs should be aggregations."),
     }
 }
 
