@@ -24,7 +24,7 @@ use plonky2::{
     field::goldilocks_field::GoldilocksField, plonk::config::PoseidonGoldilocksConfig,
     util::timing::TimingTree,
 };
-use proof_gen::{proof_types::GeneratedTxnProof, prover_state::ProverState, VerifierState};
+use proof_gen::{proof_types::GeneratedSegmentProof, prover_state::ProverState, VerifierState};
 use trace_decoder::types::{AllData, TxnProofGenIR};
 use tracing::info;
 
@@ -194,11 +194,11 @@ impl ProverStateManager {
     /// Generate a transaction proof using the specified input, loading the
     /// circuit tables as needed to shrink the individual STARK proofs, and
     /// finally aggregating them to a final transaction proof.
-    fn txn_proof_on_demand(
+    fn segment_proof_on_demand(
         &self,
         input: TxnProofGenIR,
         segment_data: &mut GenerationSegmentData,
-    ) -> anyhow::Result<GeneratedTxnProof> {
+    ) -> anyhow::Result<GeneratedSegmentProof> {
         let config = StarkConfig::standard_fast_config();
         let all_stark = AllStark::default();
 
@@ -218,16 +218,16 @@ impl ProverStateManager {
                 .state
                 .prove_segment_after_initial_stark(all_proof, &table_circuits, None)?;
 
-        Ok(GeneratedTxnProof { p_vals, intern })
+        Ok(GeneratedSegmentProof { p_vals, intern })
     }
 
     /// Generate a transaction proof using the specified input on the monolithic
     /// circuit.
-    fn txn_proof_monolithic(
+    fn segment_proof_monolithic(
         &self,
         input: TxnProofGenIR,
         segment_data: &mut GenerationSegmentData,
-    ) -> anyhow::Result<GeneratedTxnProof> {
+    ) -> anyhow::Result<GeneratedSegmentProof> {
         let p_out = p_state().state.prove_segment(
             &AllStark::default(),
             &StarkConfig::standard_fast_config(),
@@ -241,7 +241,7 @@ impl ProverStateManager {
             public_values: p_vals,
         } = p_out;
 
-        Ok(GeneratedTxnProof { p_vals, intern })
+        Ok(GeneratedSegmentProof { p_vals, intern })
     }
 
     /// Generate a transaction proof using the specified input.
@@ -253,17 +253,17 @@ impl ProverStateManager {
     /// - If the persistence strategy is [`CircuitPersistence::Disk`] with
     ///   [`TableLoadStrategy::OnDemand`], the table circuits are loaded as
     ///   needed.
-    pub fn generate_txn_proof(&self, input: AllData) -> anyhow::Result<GeneratedTxnProof> {
+    pub fn generate_segment_proof(&self, input: AllData) -> anyhow::Result<GeneratedSegmentProof> {
         let (generation_inputs, mut segment_data) = input;
 
         match self.persistence {
             CircuitPersistence::None | CircuitPersistence::Disk(TableLoadStrategy::Monolithic) => {
                 info!("using monolithic circuit {:?}", self);
-                self.txn_proof_monolithic(generation_inputs.clone(), &mut segment_data)
+                self.segment_proof_monolithic(generation_inputs.clone(), &mut segment_data)
             }
             CircuitPersistence::Disk(TableLoadStrategy::OnDemand) => {
                 info!("using on demand circuit {:?}", self);
-                self.txn_proof_on_demand(generation_inputs.clone(), &mut segment_data)
+                self.segment_proof_on_demand(generation_inputs.clone(), &mut segment_data)
             }
         }
     }

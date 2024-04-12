@@ -4,8 +4,10 @@ use paladin::{
     registry, RemoteExecute,
 };
 use proof_gen::{
-    proof_gen::{generate_agg_proof, generate_block_proof, generate_transaction_agg_proof},
-    proof_types::{AggregatableProof, GeneratedAggProof, GeneratedBlockProof},
+    proof_gen::{generate_block_proof, generate_segment_agg_proof, generate_transaction_agg_proof},
+    proof_types::{
+        GeneratedBlockProof, GeneratedTxnAggProof, SegmentAggregatableProof, TxnAggregatableProof,
+    },
 };
 use serde::{Deserialize, Serialize};
 use trace_decoder::types::AllData;
@@ -18,11 +20,11 @@ pub struct SegmentProof;
 #[cfg(not(feature = "test_only"))]
 impl Operation for SegmentProof {
     type Input = AllData;
-    type Output = proof_gen::proof_types::AggregatableProof;
+    type Output = proof_gen::proof_types::SegmentAggregatableProof;
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
         let proof = common::prover_state::p_manager()
-            .generate_txn_proof(input)
+            .generate_segment_proof(input)
             .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
 
         Ok(proof.into())
@@ -46,13 +48,13 @@ impl Operation for SegmentProof {
 }
 
 #[derive(Deserialize, Serialize, RemoteExecute)]
-pub struct AggProof;
+pub struct SegmentAggProof;
 
-impl Monoid for AggProof {
-    type Elem = AggregatableProof;
+impl Monoid for SegmentAggProof {
+    type Elem = SegmentAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let result = generate_agg_proof(p_state(), &a, &b).map_err(FatalError::from)?;
+        let result = generate_segment_agg_proof(p_state(), &a, &b).map_err(FatalError::from)?;
 
         Ok(result.into())
     }
@@ -67,7 +69,7 @@ impl Monoid for AggProof {
 pub struct TxnAggProof;
 
 impl Monoid for TxnAggProof {
-    type Elem = AggregatableProof;
+    type Elem = TxnAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
         let result = generate_transaction_agg_proof(p_state(), &a, &b).map_err(FatalError::from)?;
@@ -87,7 +89,7 @@ pub struct BlockProof {
 }
 
 impl Operation for BlockProof {
-    type Input = GeneratedAggProof;
+    type Input = GeneratedTxnAggProof;
     type Output = GeneratedBlockProof;
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {

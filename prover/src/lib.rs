@@ -66,18 +66,22 @@ impl ProverInput {
 
                 IndexedStream::from(cur_data.clone())
                     .map(&SegmentProof)
-                    .fold(&ops::AggProof)
+                    .fold(&ops::SegmentAggProof)
                     .run(runtime)
             })
             .collect();
         let txn_proofs = TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
+        let txn_proofs: Vec<_> = txn_proofs
+            .iter()
+            .map(|e| proof_gen::proof_types::TxnAggregatableProof::from(e.clone()))
+            .collect();
 
         let final_txn_proof = IndexedStream::from(txn_proofs)
             .fold(&ops::TxnAggProof)
             .run(runtime)
             .await?;
 
-        if let proof_gen::proof_types::AggregatableProof::Agg(proof) = final_txn_proof {
+        if let proof_gen::proof_types::TxnAggregatableProof::Agg(proof) = final_txn_proof {
             let prev = previous.map(|p| GeneratedBlockProof {
                 b_height: block_number.as_u64() - 1,
                 intern: p,
