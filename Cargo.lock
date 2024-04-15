@@ -1037,6 +1037,7 @@ dependencies = [
 [[package]]
 name = "evm_arithmetization"
 version = "0.1.2"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=all_data_for_zero_bin#296180ff049bffb16bdec6e76b385e735e7a24e7"
 dependencies = [
  "anyhow",
  "bytes",
@@ -1930,6 +1931,7 @@ dependencies = [
 [[package]]
 name = "mpt_trie"
 version = "0.2.0"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=all_data_for_zero_bin#296180ff049bffb16bdec6e76b385e735e7a24e7"
 dependencies = [
  "bytes",
  "enum-as-inner",
@@ -2481,6 +2483,7 @@ dependencies = [
 [[package]]
 name = "proof_gen"
 version = "0.1.2"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=all_data_for_zero_bin#296180ff049bffb16bdec6e76b385e735e7a24e7"
 dependencies = [
  "ethereum-types",
  "evm_arithmetization",
@@ -3444,6 +3447,7 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 [[package]]
 name = "trace_decoder"
 version = "0.2.0"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=all_data_for_zero_bin#296180ff049bffb16bdec6e76b385e735e7a24e7"
 dependencies = [
  "bytes",
  "ciborium",
