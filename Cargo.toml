@@ -18,7 +18,7 @@ thiserror = "1.0.50"
 futures = "0.3.29"
 
 # zk-evm dependencies
-plonky2 = "0.2.0"
+plonky2 = "0.2.2"
 evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "all_data_for_zero_bin" }
 trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "all_data_for_zero_bin" }
 proof_gen =  { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "all_data_for_zero_bin" }
