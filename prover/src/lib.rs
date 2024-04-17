@@ -1,6 +1,5 @@
 use anyhow::Result;
 use ethereum_types::U256;
-use futures::stream::TryStreamExt;
 use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
@@ -36,7 +35,7 @@ impl ProverInput {
         previous: Option<PlonkyProofIntern>,
     ) -> Result<GeneratedBlockProof> {
         use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
-        use futures::stream::FuturesOrdered;
+        use futures::{stream::FuturesUnordered, FutureExt};
         use ops::SegmentProof;
         use plonky2::field::goldilocks_field::GoldilocksField;
 
@@ -52,32 +51,31 @@ impl ProverInput {
         // Generate segment data.
         type F = GoldilocksField;
 
-        let mut cur_data = vec![];
-        let tx_proof_futs: FuturesOrdered<_> = txs
-            .iter()
-            .map(|txn| {
+        // Map the transactions to a stream of transaction proofs.
+        let tx_proof_futs: FuturesUnordered<_> = txs
+            .into_iter()
+            .enumerate()
+            .map(|(idx, txn)| {
                 let generated_data =
                     generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
                         .unwrap_or(vec![GenerationSegmentData::default()]);
-                cur_data = generated_data
-                    .iter()
-                    .map(|d| (txn.clone(), d.clone()))
+
+                let cur_data: Vec<_> = generated_data
+                    .into_iter()
+                    .map(|d| (txn.clone(), d))
                     .collect();
 
-                IndexedStream::from(cur_data.clone())
-                    .map(&SegmentProof)
+                Directive::map(IndexedStream::from(cur_data), &SegmentProof)
                     .fold(&ops::SegmentAggProof)
                     .run(runtime)
+                    .map(move |e| {
+                        e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
+                    })
             })
             .collect();
-        let txn_proofs = TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
-        let txn_proofs: Vec<_> = txn_proofs
-            .iter()
-            .map(|e| proof_gen::proof_types::TxnAggregatableProof::from(e.clone()))
-            .collect();
 
-        let final_txn_proof = IndexedStream::from(txn_proofs)
-            .fold(&ops::TxnAggProof)
+        // Fold the transaction proof stream into a single transaction proof.
+        let final_txn_proof = Directive::fold(IndexedStream::new(tx_proof_futs), &ops::TxnAggProof)
             .run(runtime)
             .await?;
 
