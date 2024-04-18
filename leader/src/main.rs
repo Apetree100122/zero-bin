@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
         }
         Command::Jerigon {
             rpc_url,
-            block_number,
+            block_numbers,
             checkpoint_block_number,
             previous_proof,
             proof_output_path,

@@ -8,11 +8,13 @@ use anyhow::Result;
 use paladin::runtime::Runtime;
 use proof_gen::types::PlonkyProofIntern;
 
+use crate::cli::BlockNumbers;
+
 /// The main function for the jerigon mode.
 pub(crate) async fn jerigon_main(
     runtime: Runtime,
     rpc_url: &str,
-    block_number: u64,
+    block_numbers: BlockNumbers,
     checkpoint_block_number: u64,
     previous: Option<PlonkyProofIntern>,
     proof_output_path_opt: Option<PathBuf>,
