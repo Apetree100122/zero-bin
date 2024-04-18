@@ -17,6 +17,8 @@ export KECCAK_CIRCUIT_SIZE="14..20"
 export KECCAK_SPONGE_CIRCUIT_SIZE="9..15"
 export LOGIC_CIRCUIT_SIZE="12..18"
 export MEMORY_CIRCUIT_SIZE="17..28"
+export MEM_BEFORE_CIRCUIT_SIZE="8..23"
+export MEM_AFTER_CIRCUIT_SIZE="8..27"
 
 PROOF_OUTPUT_DIR="proofs"
 ALWAYS_WRITE_LOGS=0 # Change this to `1` if you always want logs to be written.

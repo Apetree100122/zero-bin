@@ -87,8 +87,8 @@ impl Circuit {
             Circuit::KeccakSponge => 9..15,
             Circuit::Logic => 12..18,
             Circuit::Memory => 17..28,
-            Circuit::MemoryBefore => 8..20,
-            Circuit::MemoryAfter => 8..20,
+            Circuit::MemoryBefore => 8..23,
+            Circuit::MemoryAfter => 8..27,
         }
     }
 

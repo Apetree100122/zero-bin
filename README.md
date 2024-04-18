@@ -157,6 +157,16 @@ Table circuit sizes:
           The min/max size for the memory table circuit.
 
           [env: MEMORY_CIRCUIT_SIZE=18..22]
+      
+      --mem-before <CIRCUIT_BIT_RANGE>
+          The min/max size for the memory table circuit.
+
+          [env: MEMORY_CIRCUIT_SIZE=8..23]
+
+      --mem-after <CIRCUIT_BIT_RANGE>
+          The min/max size for the memory table circuit.
+
+          [env: MEMORY_CIRCUIT_SIZE=8..27]
 ```
 
 Note that both paladin and plonky2 table circuit sizes are configurable via command line arguments and environment variables. The command line arguments take precedence over the environment variables.
