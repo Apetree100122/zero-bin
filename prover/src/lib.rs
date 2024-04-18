@@ -1,5 +1,6 @@
 use anyhow::Result;
 use ethereum_types::U256;
+use evm_arithmetization::GenerationInputs;
 use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
@@ -34,10 +35,49 @@ impl ProverInput {
         max_cpu_len_log: usize,
         previous: Option<PlonkyProofIntern>,
     ) -> Result<GeneratedBlockProof> {
-        use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
+        use evm_arithmetization::prover::{
+            generate_next_segment, make_dummy_segment_data, GenerationSegmentData,
+        };
         use futures::{stream::FuturesUnordered, FutureExt};
         use ops::SegmentProof;
         use plonky2::field::goldilocks_field::GoldilocksField;
+
+        type F = GoldilocksField;
+
+        struct SegmentDataIterator {
+            current_data: Option<GenerationSegmentData>,
+            inputs: GenerationInputs,
+            max_cpu_len_log: Option<usize>,
+            nb_segments: usize,
+        }
+
+        impl Iterator for SegmentDataIterator {
+            type Item = (GenerationInputs, GenerationSegmentData);
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let next_data = generate_next_segment::<F>(
+                    self.max_cpu_len_log,
+                    &self.inputs,
+                    self.current_data.clone(),
+                );
+
+                if next_data.is_some() {
+                    self.nb_segments += 1;
+                    self.current_data = next_data.clone();
+                    Some((
+                        self.inputs.clone(),
+                        next_data.expect("Data cannot be `None`."),
+                    ))
+                } else {
+                    if self.nb_segments == 1 {
+                        let data = self.current_data.clone().expect("eyo");
+                        Some((self.inputs.clone(), make_dummy_segment_data(data)))
+                    } else {
+                        None
+                    }
+                }
+            }
+        }
 
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
@@ -49,23 +89,20 @@ impl ProverInput {
         )?;
 
         // Generate segment data.
-        type F = GoldilocksField;
 
         // Map the transactions to a stream of transaction proofs.
         let tx_proof_futs: FuturesUnordered<_> = txs
             .into_iter()
             .enumerate()
             .map(|(idx, txn)| {
-                let generated_data =
-                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
-                        .unwrap_or(vec![GenerationSegmentData::default()]);
+                let data_iterator = SegmentDataIterator {
+                    current_data: None,
+                    inputs: txn,
+                    max_cpu_len_log: Some(max_cpu_len_log),
+                    nb_segments: 0,
+                };
 
-                let cur_data: Vec<_> = generated_data
-                    .into_iter()
-                    .map(|d| (txn.clone(), d))
-                    .collect();
-
-                Directive::map(IndexedStream::from(cur_data), &SegmentProof)
+                Directive::map(IndexedStream::from(data_iterator), &SegmentProof)
                     .fold(&ops::SegmentAggProof)
                     .run(runtime)
                     .map(move |e| {
