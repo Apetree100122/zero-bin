@@ -2,6 +2,7 @@
 //! construct table circuits.
 use std::fmt::Display;
 
+use anyhow::{anyhow, Result};
 use clap::{Args, ValueEnum};
 
 use super::{
@@ -115,5 +116,50 @@ impl CliProverStateConfig {
 impl From<CliProverStateConfig> for ProverStateManager {
     fn from(config: CliProverStateConfig) -> Self {
         config.into_prover_state_manager()
+    }
+}
+
+/// Parses input block numbers to determine a specific block or a range of
+/// blocks.
+///
+/// This function handles three optional parameters to define a block range:
+/// a single block number, or a start and an end for a block range.
+/// It determines and returns a consistent block range format for further
+/// processing.
+///
+/// # Parameters
+/// - `block_number`: Optional single specific block number. If provided, both
+///   elements of the returned array will contain this number.
+/// - `from`: Optional start of a block range.
+/// - `to`: Optional end of a block range.
+///
+/// # Returns
+/// - `Ok([u64; 2])`: An array of two `u64` values, representing the start and
+///   end of the block range. If only one block number is relevant, both
+///   elements of the array will be the same.
+///
+/// # Error
+/// - Returns error if all parameters are `None`, indicating no valid input was
+///   provided.
+///
+/// # Examples
+/// ```
+/// assert_eq!(parse_blocks_input(Some(15), None, None).unwrap(), [15, 15]);
+/// assert_eq!(parse_blocks_input(None, Some(10), Some(20)).unwrap(), [10, 20]);
+/// assert_eq!(parse_blocks_input(None, Some(30), None).unwrap(), [30, 30]);
+/// ```
+pub fn parse_blocks_input(
+    block_number: Option<u64>,
+    from: Option<u64>,
+    to: Option<u64>,
+) -> Result<[u64; 2]> {
+    match block_number {
+        Some(number) => Ok([number, number]),
+        None => match (from, to) {
+            (Some(start), Some(end)) => Ok([start, end]),
+            (Some(start), None) => Ok([start, start]),
+            (None, Some(end)) => Ok([end, end]),
+            (None, None) => Err(anyhow!("Invalid block numbers range")),
+        },
     }
 }

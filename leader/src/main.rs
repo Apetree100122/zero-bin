@@ -3,6 +3,7 @@ use std::{fs::File, path::PathBuf};
 use anyhow::Result;
 use clap::Parser;
 use cli::Command;
+use common::prover_state::cli::parse_blocks_input;
 use common::prover_state::TableLoadStrategy;
 use dotenvy::dotenv;
 use ops::register;
@@ -66,19 +67,21 @@ async fn main() -> Result<()> {
         Command::Jerigon {
             rpc_url,
             block_number,
+            from,
+            to,
             checkpoint_block_number,
             previous_proof,
-            proof_output_path,
+            proof_output_dir,
         } => {
             let previous_proof = get_previous_proof(previous_proof)?;
 
             jerigon::jerigon_main(
                 runtime,
                 &rpc_url,
-                block_number,
+                parse_blocks_input(block_number, from, to)?,
                 checkpoint_block_number,
                 previous_proof,
-                proof_output_path,
+                proof_output_dir,
             )
             .await?;
         }

@@ -22,6 +22,9 @@ A composition of [`paladin`](https://github.com/0xPolygonZero/paladin) and [`plo
   - [RPC Usage](#rpc-usage)
   - [Docker](#docker)
   - [Development Branches](#development-branches)
+  - [Testing Blocks](#testing-blocks)
+    - [Proving Blocks](#proving-blocks)
+    - [Generating Witnesses Only](#generating-witnesses-only)
   - [License](#license)
     - [Contribution](#contribution)
 
@@ -208,18 +211,24 @@ Options:
   -u, --rpc-url <RPC_URL>
 
   -b, --block-number <BLOCK_NUMBER>
-          The block number for which to generate a proof
+          If provided, it is the block number for which to generate a proof
+  --from <BLOCK_NUMBER>
+          If provided, specifies the starting block number of the range for which to generate a proof
+  --to <BLOCK_NUMBER>
+          If provided, specifies the ending block number of the range for which to generate a proof
   -c, --checkpoint-block-number <CHECKPOINT_BLOCK_NUMBER>
           The checkpoint block number [default: 0]
   -f, --previous-proof <PREVIOUS_PROOF>
           The previous proof output
-  -o, --proof-output-path <PROOF_OUTPUT_PATH>
-          If provided, write the generated proof to this file instead of stdout
+  -o, --proof-output-dir <PROOF_OUTPUT_DIR>
+          If provided, write the generated proofs to this directory instead of stdout
   -h, --help
           Print help
 ```
 
 Prove a block.
+
+Note: It should contain at least one of the params: `-b`, `--from` and/or `--to`.
 
 ```bash
 cargo r --release --bin leader -- -r in-memory jerigon -u <RPC_URL> -b 16 > ./output/proof_16.json

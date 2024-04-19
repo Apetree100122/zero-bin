@@ -33,7 +33,14 @@ pub(crate) enum Command {
         rpc_url: String,
         /// The block number for which to generate a proof.
         #[arg(short, long)]
-        block_number: u64,
+        block_number: Option<u64>,
+        /// The starting block number of the range from which to generate a
+        /// proof.
+        #[arg(long)]
+        from: Option<u64>,
+        /// The ending block number of the range to which to generate a proof.
+        #[arg(long)]
+        to: Option<u64>,
         /// The checkpoint block number.
         #[arg(short, long, default_value_t = 0)]
         checkpoint_block_number: u64,
@@ -42,8 +49,8 @@ pub(crate) enum Command {
         previous_proof: Option<PathBuf>,
         /// If provided, write the generated proof to this file instead of
         /// stdout.
-        #[arg(long, short = 'o', value_hint = ValueHint::FilePath)]
-        proof_output_path: Option<PathBuf>,
+        #[arg(long, short = 'o', value_hint = ValueHint::DirPath)]
+        proof_output_dir: Option<PathBuf>,
     },
     /// Reads input from HTTP and writes output to a directory.
     Http {

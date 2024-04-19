@@ -1,7 +1,8 @@
+use std::collections::HashMap;
+
 use anyhow::{Context, Result};
 use ethereum_types::{Address, Bloom, H256, U256};
 use evm_arithmetization::proof::{BlockHashes, BlockMetadata};
-use futures::{stream::FuturesOrdered, TryStreamExt};
 use prover::ProverInput;
 use reqwest::IntoUrl;
 use serde::Deserialize;
@@ -156,6 +157,7 @@ impl EthGetBlockByNumberResponse {
     async fn fetch_previous_block_hashes<U: IntoUrl + Copy>(
         rpc_url: U,
         block_number: u64,
+        block_hash_cache: &mut HashMap<u64, H256>,
     ) -> Result<Vec<H256>> {
         if block_number == 0 {
             return Ok(vec![H256::default(); 256]);
@@ -174,24 +176,24 @@ impl EthGetBlockByNumberResponse {
         // Every block response includes the _parent_ hash along with its hash, so we
         // can just fetch half the blocks to acquire all hashes for the range.
         let start = block_number.saturating_sub(256);
-        let mut futs: FuturesOrdered<_> = (start..=block_number)
-            .step_by(2)
-            .map(|block_number| Self::fetch(rpc_url, block_number))
-            .collect();
+        for n in (start..=block_number).step_by(2) {
+            if let None = block_hash_cache.get(&n) {
+                let response = Self::fetch(rpc_url, n).await?;
+                block_hash_cache.insert(n, response.result.hash);
 
-        while let Some(response) = futs.try_next().await? {
-            // Ignore hash of the current block.
-            if response.result.number == block_number.into() {
-                hashes.push(response.result.parent_hash);
-                continue;
+                if n > 0 {
+                    block_hash_cache.insert(n - 1, response.result.parent_hash);
+                }
             }
+        }
 
-            // Ignore the parent of the start block.
-            if response.result.number != start.into() {
-                hashes.push(response.result.parent_hash);
+        // Ignore hash of the current block.
+        for n in start..=block_number - 1 {
+            if let Some(hash) = block_hash_cache.get(&n) {
+                hashes.push(*hash);
+            } else {
+                return Err(anyhow::anyhow!("Missing hash for block {}", n));
             }
-
-            hashes.push(response.result.hash);
         }
 
         Ok(hashes)
@@ -249,11 +251,20 @@ struct RpcBlockMetadata {
 }
 
 impl RpcBlockMetadata {
-    async fn fetch(rpc_url: &str, block_number: u64, checkpoint_block_number: u64) -> Result<Self> {
+    async fn fetch(
+        rpc_url: &str,
+        block_number: u64,
+        checkpoint_block_number: u64,
+        block_hash_cache: &mut HashMap<u64, H256>,
+    ) -> Result<Self> {
         let (block_result, chain_id_result, prev_hashes, checkpoint_state_trie_root) = try_join!(
             EthGetBlockByNumberResponse::fetch(rpc_url, block_number),
             EthChainIdResponse::fetch(rpc_url),
-            EthGetBlockByNumberResponse::fetch_previous_block_hashes(rpc_url, block_number),
+            EthGetBlockByNumberResponse::fetch_previous_block_hashes(
+                rpc_url,
+                block_number,
+                block_hash_cache
+            ),
             EthGetBlockByNumberResponse::fetch_checkpoint_state_trie_root(
                 rpc_url,
                 checkpoint_block_number
@@ -327,6 +338,7 @@ pub struct FetchProverInputRequest<'a> {
     pub rpc_url: &'a str,
     pub block_number: u64,
     pub checkpoint_block_number: u64,
+    pub block_hash_cache: &'a mut HashMap<u64, H256>,
 }
 
 pub async fn fetch_prover_input(
@@ -334,11 +346,17 @@ pub async fn fetch_prover_input(
         rpc_url,
         block_number,
         checkpoint_block_number,
+        block_hash_cache,
     }: FetchProverInputRequest<'_>,
 ) -> Result<ProverInput> {
     let (trace_result, rpc_block_metadata) = try_join!(
         JerigonTraceResponse::fetch(rpc_url, block_number),
-        RpcBlockMetadata::fetch(rpc_url, block_number, checkpoint_block_number),
+        RpcBlockMetadata::fetch(
+            rpc_url,
+            block_number,
+            checkpoint_block_number,
+            block_hash_cache
+        ),
     )?;
 
     debug!("Got block result: {:?}", rpc_block_metadata.block_by_number);
