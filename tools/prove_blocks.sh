@@ -27,7 +27,7 @@ IGNORE_PREVIOUS_PROOFS=$4
 echo "Proving blocks ${1}..${2} (Total: ${TOT_BLOCKS})"
 mkdir -p $PROOF_OUTPUT_DIR
 
-OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/b_from_${1}_to_${2}.log"
+OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/bs_$1..$2.log"
 err_msg="Blocks $1..$2 errored. See ${OUT_LOG_PATH} for more details."
 prev_proof_num=$(($1-1))
 
