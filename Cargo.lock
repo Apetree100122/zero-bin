@@ -639,6 +639,7 @@ dependencies = [
  "evm_arithmetization",
  "plonky2",
  "proof_gen",
+ "seahash",
  "thiserror",
  "trace_decoder",
  "tracing",
@@ -1502,7 +1503,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.4.10",
+ "socket2 0.5.6",
  "tokio",
  "tower-service",
  "tracing",
@@ -2110,11 +2111,15 @@ name = "ops"
 version = "0.1.0"
 dependencies = [
  "common",
+ "ethereum-types",
  "evm_arithmetization",
+ "keccak-hash 0.10.0",
  "paladin-core",
  "proof_gen",
+ "rlp",
  "serde",
  "trace_decoder",
+ "tracing",
 ]
 
 [[package]]
@@ -2912,6 +2917,12 @@ dependencies = [
  "ring",
  "untrusted",
 ]
+
+[[package]]
+name = "seahash"
+version = "4.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 
 [[package]]
 name = "security-framework"
