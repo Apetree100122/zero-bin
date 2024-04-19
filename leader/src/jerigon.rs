@@ -38,7 +38,7 @@ pub(crate) async fn jerigon_main(
             proof_json,
             proof_output_dir_opt
                 .as_ref()
-                .map(|p| p.join(format!("b{}.zkproof", block_number.to_string()))),
+                .map(|p| p.join(format!("b{}.zkproof", block_number))),
         )?;
 
         previous = Some(proof.intern);
