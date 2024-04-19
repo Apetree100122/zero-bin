@@ -177,7 +177,7 @@ impl EthGetBlockByNumberResponse {
         // can just fetch half the blocks to acquire all hashes for the range.
         let start = block_number.saturating_sub(256);
         for n in (start..=block_number).step_by(2) {
-            if let None = block_hash_cache.get(&n) {
+            if block_hash_cache.get(&n).is_none() {
                 let response = Self::fetch(rpc_url, n).await?;
                 block_hash_cache.insert(n, response.result.hash);
 

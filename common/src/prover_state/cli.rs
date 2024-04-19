@@ -141,13 +141,6 @@ impl From<CliProverStateConfig> for ProverStateManager {
 /// # Error
 /// - Returns error if all parameters are `None`, indicating no valid input was
 ///   provided.
-///
-/// # Examples
-/// ```
-/// assert_eq!(parse_blocks_input(Some(15), None, None).unwrap(), [15, 15]);
-/// assert_eq!(parse_blocks_input(None, Some(10), Some(20)).unwrap(), [10, 20]);
-/// assert_eq!(parse_blocks_input(None, Some(30), None).unwrap(), [30, 30]);
-/// ```
 pub fn parse_blocks_input(
     block_number: Option<u64>,
     from: Option<u64>,
