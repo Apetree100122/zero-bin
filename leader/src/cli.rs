@@ -1,5 +1,10 @@
 use std::path::PathBuf;
+use std::{
+    ops::RangeInclusive,
+    str::{FromStr, Split},
+};
 
+use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand, ValueHint};
 use common::prover_state::cli::CliProverStateConfig;
 
@@ -18,6 +23,63 @@ pub(crate) struct Cli {
     pub(crate) prover_state_config: CliProverStateConfig,
 }
 
+#[derive(Clone, Debug)]
+pub(super) enum BlockNumbers {
+    Single(u64),
+    RangeInclusive(RangeInclusive<u64>),
+}
+
+impl FromStr for BlockNumbers {
+    type Err = anyhow::Error;
+
+    /// Parses input block numbers to determine a specific block or a range of
+    /// blocks.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_str_intern(s)
+            .with_context(|| {
+                format!(
+                    "Expected a single value or a range, but instead got \"{}\".",
+                    s
+                )
+            })
+            .map_err(|e| anyhow!("{e:#}"))
+    }
+}
+
+impl BlockNumbers {
+    fn from_str_intern(s: &str) -> anyhow::Result<Self> {
+        // Did we get passed a single value?
+        if let Ok(v) = s.parse::<u64>() {
+            return Ok(Self::Single(v));
+        }
+
+        // Check if it's a range.
+        let mut range_vals = s.split("..=");
+
+        let start = Self::next_and_try_parse(&mut range_vals)?;
+        let end = Self::next_and_try_parse(&mut range_vals)?;
+
+        if range_vals.count() > 0 {
+            return Err(anyhow!(
+                "Parsed a range but there were unexpected characters afterwards!"
+            ));
+        }
+
+        Ok(Self::RangeInclusive(start..=end))
+    }
+
+    fn next_and_try_parse(range_vals: &mut Split<&str>) -> anyhow::Result<u64> {
+        let unparsed_val = range_vals
+            .next()
+            .with_context(|| "Parsing a value as a `RangeInclusive`")?;
+        let res = unparsed_val
+            .parse()
+            .with_context(|| format!("Parsing the range val \"{unparsed_val}\" into a usize"))?;
+
+        Ok(res)
+    }
+}
+
 #[derive(Subcommand)]
 pub(crate) enum Command {
     /// Reads input from stdin and writes output to stdout.
@@ -33,14 +95,7 @@ pub(crate) enum Command {
         rpc_url: String,
         /// The block number for which to generate a proof.
         #[arg(short, long)]
-        block_number: Option<u64>,
-        /// The starting block number of the range from which to generate a
-        /// proof.
-        #[arg(long)]
-        from: Option<u64>,
-        /// The ending block number of the range to which to generate a proof.
-        #[arg(long)]
-        to: Option<u64>,
+        block_numbers: BlockNumbers,
         /// The checkpoint block number.
         #[arg(short, long, default_value_t = 0)]
         checkpoint_block_number: u64,

@@ -24,17 +24,23 @@ ALWAYS_WRITE_LOGS=0 # Change this to `1` if you always want logs to be written.
 TOT_BLOCKS=$(($2-$1+1))
 IGNORE_PREVIOUS_PROOFS=$4
 
-echo "Proving blocks ${1}..${2} (Total: ${TOT_BLOCKS})"
 mkdir -p $PROOF_OUTPUT_DIR
 
-OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/bs_$1..$2.log"
-err_msg="Blocks $1..$2 errored. See ${OUT_LOG_PATH} for more details."
+OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/bs_$1..=$2.log"
+info_msg="Proving blocks $1..=$2... See ${OUT_LOG_PATH} for more details."
+err_msg="Blocks $1..=$2 errored. See ${OUT_LOG_PATH} for more details."
 prev_proof_num=$(($1-1))
+block_numbers="$1..=$2"
 
+# If we are proving only one block, set the variables accordingly.
 if [ $1 -eq $2 ]; then
     OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/b$1.log"
+    info_msg="Proving block ${1}... (Total: 1)"
     err_msg="Block $1 errored. See ${OUT_LOG_PATH} for more details."
+    block_numbers=$1
 fi
+
+echo $info_msg
 
 if [ $IGNORE_PREVIOUS_PROOFS ]; then
     # Set checkpoint height to previous block number
@@ -45,7 +51,7 @@ else
     fi
 fi
 
-cargo r --release --bin leader -- --runtime in-memory jerigon --rpc-url "$3" --from $1 --to $2 --proof-output-dir $PROOF_OUTPUT_DIR $PREV_PROOF_EXTRA_ARG > $OUT_LOG_PATH 2>&1
+cargo r --release --bin leader -- --runtime in-memory jerigon --rpc-url "$3" --block-numbers $block_numbers --proof-output-dir $PROOF_OUTPUT_DIR $PREV_PROOF_EXTRA_ARG > $OUT_LOG_PATH 2>&1
 
 retVal=$?
 echo $retVal

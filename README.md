@@ -205,17 +205,13 @@ cargo r --release --bin leader jerigon --help
 
 Reads input from a Jerigon node and writes output to stdout
 
-Usage: leader jerigon [OPTIONS] --rpc-url <RPC_URL> --block-number <BLOCK_NUMBER>
+Usage: leader jerigon [OPTIONS] --rpc-url <RPC_URL> --block-numbers <BLOCK_NUMBERS>
 
 Options:
   -u, --rpc-url <RPC_URL>
 
-  -b, --block-number <BLOCK_NUMBER>
-          If provided, it is the block number for which to generate a proof
-  --from <BLOCK_NUMBER>
-          If provided, specifies the starting block number of the range for which to generate a proof
-  --to <BLOCK_NUMBER>
-          If provided, specifies the ending block number of the range for which to generate a proof
+  -b, --block-numberss <BLOCK_NUMBERS>
+          The block number or a block numbers range for which to generate a proof
   -c, --checkpoint-block-number <CHECKPOINT_BLOCK_NUMBER>
           The checkpoint block number [default: 0]
   -f, --previous-proof <PREVIOUS_PROOF>
@@ -227,8 +223,6 @@ Options:
 ```
 
 Prove a block.
-
-Note: It should contain at least one of the params: `-b`, `--from` and/or `--to`.
 
 ```bash
 cargo r --release --bin leader -- -r in-memory jerigon -u <RPC_URL> -b 16 > ./output/proof_16.json
@@ -347,7 +341,7 @@ Options:
 Example:
 
 ```bash
-cargo r --release --bin rpc fetch --rpc-url <RPC_URL> --block-number 16 > ./output/block-16.json
+cargo r --release --bin rpc fetch --rpc-url <RPC_URL> --block-numbers 16 > ./output/block-16.json
 ```
 
 ## Docker
