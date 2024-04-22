@@ -31,13 +31,10 @@ OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/bs_$1..=$2.log"
 prev_proof_num=$(($1-1))
 block_numbers="$1..=$2"
 
-# If we are proving only one block, set the output log path and block_numbers accordingly.
+# If we are proving only one block, set the block_numbers accordingly.
 if [ $1 -eq $2 ]; then
-    OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/b$1.log"
     block_numbers=$1
 fi
-
-err_msg="Blocks $1..=$2 errored. See ${OUT_LOG_PATH} for more details."
 
 if [ $IGNORE_PREVIOUS_PROOFS ]; then
     # Set checkpoint height to previous block number
@@ -54,7 +51,7 @@ retVal=$?
 echo $retVal
 if [ $retVal -ne 0 ]; then
     # Some error occured.
-    echo $err_msg
+    echo "Blocks $1..=$2 errored. See ${OUT_LOG_PATH} for more details."
     exit $retVal
 else
     # Remove the log on success if we don't want to keep it.
