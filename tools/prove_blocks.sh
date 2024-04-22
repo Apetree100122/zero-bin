@@ -31,8 +31,9 @@ OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/bs_$1..=$2.log"
 prev_proof_num=$(($1-1))
 block_numbers="$1..=$2"
 
-# If we are proving only one block, set the block_numbers accordingly.
+# If we are proving only one block, set the output log path and block_numbers accordingly.
 if [ $1 -eq $2 ]; then
+    OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/b$1.log"
     block_numbers=$1
 fi
 
