@@ -24,23 +24,20 @@ ALWAYS_WRITE_LOGS=0 # Change this to `1` if you always want logs to be written.
 TOT_BLOCKS=$(($2-$1+1))
 IGNORE_PREVIOUS_PROOFS=$4
 
+echo "Proving blocks ${1}..=${2}... (Total: ${TOT_BLOCKS})"
 mkdir -p $PROOF_OUTPUT_DIR
 
 OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/bs_$1..=$2.log"
-info_msg="Proving blocks $1..=$2... See ${OUT_LOG_PATH} for more details."
-err_msg="Blocks $1..=$2 errored. See ${OUT_LOG_PATH} for more details."
 prev_proof_num=$(($1-1))
 block_numbers="$1..=$2"
 
-# If we are proving only one block, set the variables accordingly.
+# If we are proving only one block, set the output log path and block_numbers accordingly.
 if [ $1 -eq $2 ]; then
     OUT_LOG_PATH="${PROOF_OUTPUT_DIR}/b$1.log"
-    info_msg="Proving block ${1}... (Total: 1)"
-    err_msg="Block $1 errored. See ${OUT_LOG_PATH} for more details."
     block_numbers=$1
 fi
 
-echo $info_msg
+err_msg="Blocks $1..=$2 errored. See ${OUT_LOG_PATH} for more details."
 
 if [ $IGNORE_PREVIOUS_PROOFS ]; then
     # Set checkpoint height to previous block number

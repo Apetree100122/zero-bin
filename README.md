@@ -210,7 +210,7 @@ Usage: leader jerigon [OPTIONS] --rpc-url <RPC_URL> --block-numbers <BLOCK_NUMBE
 Options:
   -u, --rpc-url <RPC_URL>
 
-  -b, --block-numberss <BLOCK_NUMBERS>
+  -b, --block-numbers <BLOCK_NUMBERS>
           The block number or a block numbers range for which to generate a proof
   -c, --checkpoint-block-number <CHECKPOINT_BLOCK_NUMBER>
           The checkpoint block number [default: 0]
@@ -341,7 +341,7 @@ Options:
 Example:
 
 ```bash
-cargo r --release --bin rpc fetch --rpc-url <RPC_URL> --block-numbers 16 > ./output/block-16.json
+cargo r --release --bin rpc fetch --rpc-url <RPC_URL> --block-number 16 > ./output/block-16.json
 ```
 
 ## Docker

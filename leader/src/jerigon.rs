@@ -66,13 +66,13 @@ async fn process_block(
     checkpoint_block_number: u64,
     previous: Option<PlonkyProofIntern>,
     proof_output_dir_opt: &Option<PathBuf>,
-    mut block_hash_cache: &mut HashMap<u64, H256>,
+    block_hash_cache: &mut HashMap<u64, H256>,
 ) -> Result<Option<PlonkyProofIntern>> {
     let prover_input = rpc::fetch_prover_input(rpc::FetchProverInputRequest {
         rpc_url,
         block_number,
         checkpoint_block_number,
-        block_hash_cache: &mut block_hash_cache,
+        block_hash_cache,
     })
     .await?;
 

@@ -93,7 +93,7 @@ pub(crate) enum Command {
         // The Jerigon RPC URL.
         #[arg(long, short = 'u', value_hint = ValueHint::Url)]
         rpc_url: String,
-        /// The block number for which to generate a proof.
+        /// The block numbers for which to generate a proof.
         #[arg(short, long)]
         block_numbers: BlockNumbers,
         /// The checkpoint block number.
