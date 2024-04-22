@@ -341,7 +341,7 @@ Options:
 Example:
 
 ```bash
-cargo r --release --bin rpc fetch --rpc-url <RPC_URL> --block-number 16 > ./output/block-16.json
+cargo r --release --bin rpc fetch --rpc-url <RPC_URL> --block-numbers 16 > ./output/block-16.json
 ```
 
 ## Docker
