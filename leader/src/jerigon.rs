@@ -24,34 +24,22 @@ pub(crate) async fn jerigon_main(
     let mut previous = previous;
     let mut block_hash_cache: HashMap<u64, H256> = HashMap::new();
 
-    match block_numbers {
-        BlockNumbers::Single(block_number) => {
-            process_block(
-                &runtime,
-                rpc_url,
-                block_number,
-                checkpoint_block_number,
-                previous,
-                &proof_output_dir_opt,
-                &mut block_hash_cache,
-            )
-            .await?;
-        }
-        BlockNumbers::RangeInclusive(block_numbers_range) => {
-            // Code to execute if BlockNumbers is RangeInclusive
-            for block_number in block_numbers_range {
-                previous = process_block(
-                    &runtime,
-                    rpc_url,
-                    block_number,
-                    checkpoint_block_number,
-                    previous,
-                    &proof_output_dir_opt,
-                    &mut block_hash_cache,
-                )
-                .await?;
-            }
-        }
+    let block_range = match block_numbers {
+        BlockNumbers::Single(block_number) => block_number..=block_number,
+        BlockNumbers::RangeInclusive(block_range) => block_range,
+    };
+
+    for block_number in block_range {
+        previous = process_block(
+            &runtime,
+            rpc_url,
+            block_number,
+            checkpoint_block_number,
+            previous,
+            &proof_output_dir_opt,
+            &mut block_hash_cache,
+        )
+        .await?;
     }
 
     runtime.close().await?;
