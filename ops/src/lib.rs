@@ -19,39 +19,19 @@ registry!();
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct TxProof;
 
-fn run_and_wrap_txn_proof_in_elapsed_span<F, O>(f: F, ident: String) -> Result<O>
-where
-    F: Fn() -> Result<O>,
-{
-    let _span = info_span!("proof generation", ident).entered();
-    let start = Instant::now();
-
-    let proof = f()?;
-
-    event!(
-        Level::INFO,
-        "txn proof {:.4} took {:?}",
-        ident,
-        start.elapsed()
-    );
-    Ok(proof)
-}
-
 #[cfg(not(feature = "test_only"))]
 impl Operation for TxProof {
     type Input = GenerationInputs;
     type Output = proof_gen::proof_types::AggregatableProof;
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
-        let txn_ident = Self::txn_ident(&input);
-
-        let proof = run_and_wrap_txn_proof_in_elapsed_span(
+        let proof = Self::run_and_wrap_txn_proof_in_elapsed_span(
             || {
                 common::prover_state::p_manager()
                     .generate_txn_proof(input.clone())
                     .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate).into())
             },
-            txn_ident,
+            &input,
         )?;
 
         Ok(proof.into())
@@ -64,16 +44,14 @@ impl Operation for TxProof {
     type Output = ();
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
-        let txn_ident = Self::txn_ident(&input);
-
-        run_and_wrap_txn_proof_in_elapsed_span(
+        Self::run_and_wrap_txn_proof_in_elapsed_span(
             || {
                 evm_arithmetization::prover::testing::simulate_execution::<proof_gen::types::Field>(
                     input.clone(),
                 )
                 .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate).into())
             },
-            txn_ident,
+            &input,
         )?;
 
         Ok(())
@@ -81,17 +59,33 @@ impl Operation for TxProof {
 }
 
 impl TxProof {
-    fn txn_ident(ir: &GenerationInputs) -> String {
+    fn run_and_wrap_txn_proof_in_elapsed_span<F, O>(f: F, ir: &GenerationInputs) -> Result<O>
+    where
+        F: Fn() -> Result<O>,
+    {
+        let id = format!(
+            "b{} - {}",
+            ir.block_metadata.block_number, ir.txn_number_before
+        );
+
+        let _span = info_span!("p_gen", id).entered();
+        let start = Instant::now();
+
+        let proof = f()?;
+
         let txn_hash_str = ir
             .signed_txn
             .as_ref()
             .map(|txn| format!("{:x}", keccak(txn)))
             .unwrap_or_else(|| "Dummy".to_string());
 
-        format!(
-            "b{} - {} ({})",
-            ir.block_metadata.block_number, ir.txn_number_before, txn_hash_str
-        )
+        event!(
+            Level::INFO,
+            "txn proof ({}) took {:?}",
+            txn_hash_str,
+            start.elapsed()
+        );
+        Ok(proof)
     }
 }
 

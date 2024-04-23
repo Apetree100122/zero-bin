@@ -2824,9 +2824,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.21.10"
+version = "0.21.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9d5a6813c0759e4609cd494e8e725babae6a2ca7b62a5536a13daaec6fcb7ba"
+checksum = "7fecbfb7b1444f477b345853b1fce097a2c6fb637b2bfb87e6bc5db0f043fae4"
 dependencies = [
  "log",
  "ring",
@@ -3467,7 +3467,7 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "trace_decoder"
-version = "0.3.0"
+version = "0.3.1"
 source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=develop#4a9dfda25906b3cf29d192342ed4322f39514b7f"
 dependencies = [
  "bytes",
