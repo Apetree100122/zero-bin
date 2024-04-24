@@ -20,10 +20,10 @@ rlp = "0.5.2"
 keccak-hash = "0.10.0"
 
 # zk-evm dependencies
-plonky2 = "0.2.2"
-evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "develop" }
-trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "develop" }
-proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "develop" }
+plonky2 = { git = "https://github.com/0xPolygonZero/plonky2.git", branch = "benchmark-1571" }
+evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "benchmark-1571" }
+trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "benchmark-1571" }
+proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "benchmark-1571" }
 
 [workspace.package]
 edition = "2021"
