@@ -68,7 +68,7 @@ async fn process_block(
     })
     .await?;
 
-    let curr_hash = prover_input.other_data.b_data.b_hashes.cur_hash.clone();
+    let curr_hash = prover_input.other_data.b_data.b_hashes.cur_hash;
     let proof = prover_input.prove(runtime, previous).await?;
 
     let proof_json = serde_json::to_vec(&proof.intern)?;
