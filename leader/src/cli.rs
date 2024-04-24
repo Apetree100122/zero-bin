@@ -74,7 +74,7 @@ impl BlockNumbers {
             .with_context(|| "Parsing a value as a `RangeInclusive`")?;
         let res = unparsed_val
             .parse()
-            .with_context(|| format!("Parsing the range val \"{unparsed_val}\" into a usize"))?;
+            .with_context(|| format!("Parsing the range val \"{}\" into a usize", unparsed_val))?;
 
         Ok(res)
     }

@@ -211,7 +211,8 @@ Options:
   -u, --rpc-url <RPC_URL>
 
   -b, --block-numbers <BLOCK_NUMBERS>
-          The block number or a block numbers range for which to generate a proof
+          The block number or a block numbers range for which to generate a proof. If range is provided
+          it should be inclusive i.e. `{from_block_number}..={to_block_number}`
   -c, --checkpoint-block-number <CHECKPOINT_BLOCK_NUMBER>
           The checkpoint block number [default: 0]
   -f, --previous-proof <PREVIOUS_PROOF>
