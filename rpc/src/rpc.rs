@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
 use anyhow::{Context, Result};
 use ethereum_types::{Address, Bloom, H256, U256};
 use evm_arithmetization::proof::{BlockHashes, BlockMetadata};
+use futures::{stream::FuturesOrdered, TryStreamExt};
 use prover::ProverInput;
 use reqwest::IntoUrl;
 use serde::Deserialize;
@@ -154,10 +153,9 @@ impl EthGetBlockByNumberResponse {
         Ok(parsed)
     }
 
-    async fn fetch_previous_block_hashes<U: IntoUrl + Copy>(
+    pub async fn fetch_previous_block_hashes<U: IntoUrl + Copy>(
         rpc_url: U,
         block_number: u64,
-        block_hash_cache: &mut HashMap<u64, H256>,
     ) -> Result<Vec<H256>> {
         if block_number == 0 {
             return Ok(vec![H256::default(); 256]);
@@ -176,24 +174,24 @@ impl EthGetBlockByNumberResponse {
         // Every block response includes the _parent_ hash along with its hash, so we
         // can just fetch half the blocks to acquire all hashes for the range.
         let start = block_number.saturating_sub(256);
-        for n in (start..=block_number).step_by(2) {
-            if block_hash_cache.get(&n).is_none() {
-                let response = Self::fetch(rpc_url, n).await?;
-                block_hash_cache.insert(n, response.result.hash);
+        let mut futs: FuturesOrdered<_> = (start..=block_number)
+            .step_by(2)
+            .map(|block_number| Self::fetch(rpc_url, block_number))
+            .collect();
 
-                if n > 0 {
-                    block_hash_cache.insert(n - 1, response.result.parent_hash);
-                }
+        while let Some(response) = futs.try_next().await? {
+            // Ignore hash of the current block.
+            if response.result.number == block_number.into() {
+                hashes.push(response.result.parent_hash);
+                continue;
             }
-        }
 
-        // Ignore hash of the current block.
-        for n in start..=block_number - 1 {
-            if let Some(hash) = block_hash_cache.get(&n) {
-                hashes.push(*hash);
-            } else {
-                return Err(anyhow::anyhow!("Missing hash for block {}", n));
+            // Ignore the parent of the start block.
+            if response.result.number != start.into() {
+                hashes.push(response.result.parent_hash);
             }
+
+            hashes.push(response.result.hash);
         }
 
         Ok(hashes)
@@ -246,25 +244,15 @@ impl EthChainIdResponse {
 struct RpcBlockMetadata {
     block_by_number: EthGetBlockByNumberResponse,
     chain_id: EthChainIdResponse,
-    prev_hashes: Vec<H256>,
+    prev_hashes: Option<Vec<H256>>,
     checkpoint_state_trie_root: H256,
 }
 
 impl RpcBlockMetadata {
-    async fn fetch(
-        rpc_url: &str,
-        block_number: u64,
-        checkpoint_block_number: u64,
-        block_hash_cache: &mut HashMap<u64, H256>,
-    ) -> Result<Self> {
-        let (block_result, chain_id_result, prev_hashes, checkpoint_state_trie_root) = try_join!(
+    async fn fetch(rpc_url: &str, block_number: u64, checkpoint_block_number: u64) -> Result<Self> {
+        let (block_result, chain_id_result, checkpoint_state_trie_root) = try_join!(
             EthGetBlockByNumberResponse::fetch(rpc_url, block_number),
             EthChainIdResponse::fetch(rpc_url),
-            EthGetBlockByNumberResponse::fetch_previous_block_hashes(
-                rpc_url,
-                block_number,
-                block_hash_cache
-            ),
             EthGetBlockByNumberResponse::fetch_checkpoint_state_trie_root(
                 rpc_url,
                 checkpoint_block_number
@@ -274,7 +262,7 @@ impl RpcBlockMetadata {
         Ok(Self {
             block_by_number: block_result,
             chain_id: chain_id_result,
-            prev_hashes,
+            prev_hashes: None,
             checkpoint_state_trie_root,
         })
     }
@@ -324,7 +312,7 @@ impl From<RpcBlockMetadata> for OtherBlockData {
             b_data: BlockLevelData {
                 b_meta: block_metadata,
                 b_hashes: BlockHashes {
-                    prev_hashes,
+                    prev_hashes: prev_hashes.unwrap_or_default(),
                     cur_hash: block_by_number.result.hash,
                 },
                 withdrawals,
@@ -338,7 +326,7 @@ pub struct FetchProverInputRequest<'a> {
     pub rpc_url: &'a str,
     pub block_number: u64,
     pub checkpoint_block_number: u64,
-    pub block_hash_cache: &'a mut HashMap<u64, H256>,
+    pub prev_hashes: &'a Vec<H256>,
 }
 
 pub async fn fetch_prover_input(
@@ -346,18 +334,15 @@ pub async fn fetch_prover_input(
         rpc_url,
         block_number,
         checkpoint_block_number,
-        block_hash_cache,
+        prev_hashes,
     }: FetchProverInputRequest<'_>,
 ) -> Result<ProverInput> {
-    let (trace_result, rpc_block_metadata) = try_join!(
+    let (trace_result, mut rpc_block_metadata) = try_join!(
         JerigonTraceResponse::fetch(rpc_url, block_number),
-        RpcBlockMetadata::fetch(
-            rpc_url,
-            block_number,
-            checkpoint_block_number,
-            block_hash_cache
-        ),
+        RpcBlockMetadata::fetch(rpc_url, block_number, checkpoint_block_number,),
     )?;
+
+    rpc_block_metadata.prev_hashes = Some(prev_hashes.clone());
 
     debug!("Got block result: {:?}", rpc_block_metadata.block_by_number);
     debug!("Got trace result: {:?}", trace_result);
@@ -367,4 +352,8 @@ pub async fn fetch_prover_input(
         block_trace: trace_result.try_into()?,
         other_data: rpc_block_metadata.into(),
     })
+}
+
+pub async fn fetch_previous_block_hashes(rpc_url: &str, block_number: u64) -> Result<Vec<H256>> {
+    EthGetBlockByNumberResponse::fetch_previous_block_hashes(rpc_url, block_number).await
 }
