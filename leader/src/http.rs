@@ -16,6 +16,7 @@ pub(crate) async fn http_main(
     port: u16,
     output_dir: PathBuf,
     max_cpu_len_log: usize,
+    save_inputs_on_error: bool,
 ) -> Result<()> {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     debug!("listening on {}", addr);
@@ -25,7 +26,15 @@ pub(crate) async fn http_main(
         "/prove",
         post({
             let runtime = runtime.clone();
-            move |body| prove(body, runtime, output_dir.clone(), max_cpu_len_log)
+            move |body| {
+                prove(
+                    body,
+                    runtime,
+                    output_dir.clone(),
+                    max_cpu_len_log,
+                    save_inputs_on_error,
+                )
+            }
         }),
     );
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -66,6 +75,7 @@ async fn prove(
     runtime: Arc<Runtime>,
     output_dir: PathBuf,
     max_cpu_len_log: usize,
+    save_inputs_on_error: bool,
 ) -> StatusCode {
     debug!("Received payload: {:#?}", payload);
 
@@ -73,7 +83,12 @@ async fn prove(
 
     match payload
         .prover_input
-        .prove(&runtime, max_cpu_len_log, payload.previous)
+        .prove(
+            &runtime,
+            payload.previous,
+            max_cpu_len_log,
+            save_inputs_on_error,
+        )
         .await
     {
         Ok(b_proof) => match write_to_file(output_dir, block_number, &b_proof) {

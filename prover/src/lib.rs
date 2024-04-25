@@ -31,8 +31,9 @@ impl ProverInput {
     pub async fn prove(
         self,
         runtime: &Runtime,
-        max_cpu_len_log: usize,
         previous: Option<PlonkyProofIntern>,
+        max_cpu_len_log: usize,
+        save_inputs_on_error: bool,
     ) -> Result<GeneratedBlockProof> {
         use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
         use futures::{stream::FuturesUnordered, FutureExt};
@@ -56,28 +57,39 @@ impl ProverInput {
             .into_iter()
             .enumerate()
             .map(|(idx, txn)| {
-                let generated_data =
-                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
-                        .unwrap_or(vec![GenerationSegmentData::default()]);
+                let generated_data = generate_all_data_segments::<F>(Some(max_cpu_len_log), &txn)
+                    .unwrap_or(vec![GenerationSegmentData::default()]);
 
                 let cur_data: Vec<_> = generated_data
                     .into_iter()
                     .map(|d| (txn.clone(), d))
                     .collect();
 
-                Directive::map(IndexedStream::from(cur_data), &SegmentProof)
-                    .fold(&ops::SegmentAggProof)
-                    .run(runtime)
-                    .map(move |e| {
-                        e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
-                    })
+                Directive::map(
+                    IndexedStream::from(cur_data),
+                    &SegmentProof {
+                        save_inputs_on_error,
+                    },
+                )
+                .fold(&ops::SegmentAggProof {
+                    save_inputs_on_error,
+                })
+                .run(runtime)
+                .map(move |e| {
+                    e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
+                })
             })
             .collect();
 
         // Fold the transaction proof stream into a single transaction proof.
-        let final_txn_proof = Directive::fold(IndexedStream::new(tx_proof_futs), &ops::TxnAggProof)
-            .run(runtime)
-            .await?;
+        let final_txn_proof = Directive::fold(
+            IndexedStream::new(tx_proof_futs),
+            &ops::TxnAggProof {
+                save_inputs_on_error,
+            },
+        )
+        .run(runtime)
+        .await?;
 
         if let proof_gen::proof_types::TxnAggregatableProof::Agg(proof) = final_txn_proof {
             let prev = previous.map(|p| GeneratedBlockProof {
@@ -86,7 +98,10 @@ impl ProverInput {
             });
 
             let block_proof = paladin::directive::Literal(proof)
-                .map(&ops::BlockProof { prev })
+                .map(&ops::BlockProof {
+                    prev,
+                    save_inputs_on_error,
+                })
                 .run(runtime)
                 .await?;
 
@@ -104,6 +119,7 @@ impl ProverInput {
         runtime: &Runtime,
         max_cpu_len_log: usize,
         _previous: Option<PlonkyProofIntern>,
+        save_inputs_on_error: bool,
     ) -> Result<GeneratedBlockProof> {
         use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
         use futures::stream::FuturesOrdered;
@@ -133,7 +149,9 @@ impl ProverInput {
                     .map(|d| (txn.clone(), max_cpu_len_log, d.clone()))
                     .collect();
                 IndexedStream::from(cur_data.clone())
-                    .map(&SegmentProof)
+                    .map(&SegmentProof {
+                        save_inputs_on_error,
+                    })
                     .run(runtime)
             })
             .collect();
