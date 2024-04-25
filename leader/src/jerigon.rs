@@ -75,9 +75,11 @@ async fn process_block(
     let curr_hash = prover_input.other_data.b_data.b_hashes.cur_hash;
     let proof = prover_input
         .prove(runtime, previous, save_inputs_on_error)
-        .await?;
+        .await;
+    runtime.close().await?;
 
-    let proof_json = serde_json::to_vec(&proof.intern)?;
+    let proof_intern = proof?.intern;
+    let proof_json = serde_json::to_vec(&proof_intern)?;
     write_proof(
         proof_json,
         proof_output_dir_opt
@@ -85,7 +87,7 @@ async fn process_block(
             .map(|p| p.join(format!("b{}.zkproof", block_number))),
     )?;
 
-    Ok((curr_hash, Some(proof.intern)))
+    Ok((curr_hash, Some(proof_intern)))
 }
 
 fn write_proof(proof: Vec<u8>, proof_output_path_opt: Option<PathBuf>) -> Result<()> {
