@@ -221,6 +221,8 @@ Options:
           If provided, write the generated proofs to this directory instead of stdout
   -h, --help
           Print help
+  -s, --save-inputs-on-error
+          If provided, save the public inputs to disk on error
 ```
 
 Prove a block.

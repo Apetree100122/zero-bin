@@ -87,6 +87,9 @@ pub(crate) enum Command {
         /// The previous proof output.
         #[arg(long, short = 'f', value_hint = ValueHint::FilePath)]
         previous_proof: Option<PathBuf>,
+        /// If true, save the public inputs to disk on error.
+        #[arg(short, long, default_value_t = false)]
+        save_inputs_on_error: bool,
     },
     /// Reads input from a Jerigon node and writes output to stdout.
     Jerigon {
@@ -106,6 +109,9 @@ pub(crate) enum Command {
         /// stdout.
         #[arg(long, short = 'o', value_hint = ValueHint::DirPath)]
         proof_output_dir: Option<PathBuf>,
+        /// If true, save the public inputs to disk on error.
+        #[arg(short, long, default_value_t = false)]
+        save_inputs_on_error: bool,
     },
     /// Reads input from HTTP and writes output to a directory.
     Http {
@@ -115,5 +121,8 @@ pub(crate) enum Command {
         /// The directory to which output should be written.
         #[arg(short, long, value_hint = ValueHint::DirPath)]
         output_dir: PathBuf,
+        /// If true, save the public inputs to disk on error.
+        #[arg(short, long, default_value_t = false)]
+        save_inputs_on_error: bool,
     },
 }

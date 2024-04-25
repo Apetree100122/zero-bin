@@ -15,30 +15,24 @@ use std::{fmt::Display, sync::OnceLock};
 
 use clap::ValueEnum;
 use evm_arithmetization::{
-    cpu::kernel::aggregator::KERNEL, proof::AllProof, prover::prove, AllStark, StarkConfig,
+    proof::AllProof, prover::prove, AllStark, GenerationInputs, StarkConfig,
 };
 use plonky2::{
-    field::goldilocks_field::GoldilocksField,
-    plonk::config::{GenericHashOut, PoseidonGoldilocksConfig},
+    field::goldilocks_field::GoldilocksField, plonk::config::PoseidonGoldilocksConfig,
     util::timing::TimingTree,
 };
 use proof_gen::{proof_types::GeneratedTxnProof, prover_state::ProverState, VerifierState};
-use trace_decoder::types::TxnProofGenIR;
 use tracing::info;
 
 use self::circuit::{CircuitConfig, NUM_TABLES};
-use crate::prover_state::{
-    persistence::{
-        BaseProverResource, DiskResource, MonolithicProverResource, RecursiveCircuitResource,
-        VerifierResource,
-    },
-    utils::pkg_consistency_check,
+use crate::prover_state::persistence::{
+    BaseProverResource, DiskResource, MonolithicProverResource, RecursiveCircuitResource,
+    VerifierResource,
 };
 
 pub mod circuit;
 pub mod cli;
 pub mod persistence;
-mod utils;
 
 pub(crate) type Config = PoseidonGoldilocksConfig;
 pub(crate) type Field = GoldilocksField;
@@ -194,7 +188,7 @@ impl ProverStateManager {
     /// Generate a transaction proof using the specified input, loading the
     /// circuit tables as needed to shrink the individual STARK proofs, and
     /// finally aggregating them to a final transaction proof.
-    fn txn_proof_on_demand(&self, input: TxnProofGenIR) -> anyhow::Result<GeneratedTxnProof> {
+    fn txn_proof_on_demand(&self, input: GenerationInputs) -> anyhow::Result<GeneratedTxnProof> {
         let config = StarkConfig::standard_fast_config();
         let all_stark = AllStark::default();
         let all_proof = prove(&all_stark, &config, input, &mut TimingTree::default(), None)?;
@@ -211,7 +205,7 @@ impl ProverStateManager {
 
     /// Generate a transaction proof using the specified input on the monolithic
     /// circuit.
-    fn txn_proof_monolithic(&self, input: TxnProofGenIR) -> anyhow::Result<GeneratedTxnProof> {
+    fn txn_proof_monolithic(&self, input: GenerationInputs) -> anyhow::Result<GeneratedTxnProof> {
         let (intern, p_vals) = p_state().state.prove_root(
             &AllStark::default(),
             &StarkConfig::standard_fast_config(),
@@ -232,7 +226,7 @@ impl ProverStateManager {
     /// - If the persistence strategy is [`CircuitPersistence::Disk`] with
     ///   [`TableLoadStrategy::OnDemand`], the table circuits are loaded as
     ///   needed.
-    pub fn generate_txn_proof(&self, input: TxnProofGenIR) -> anyhow::Result<GeneratedTxnProof> {
+    pub fn generate_txn_proof(&self, input: GenerationInputs) -> anyhow::Result<GeneratedTxnProof> {
         match self.persistence {
             CircuitPersistence::None | CircuitPersistence::Disk(TableLoadStrategy::Monolithic) => {
                 info!("using monolithic circuit {:?}", self);
@@ -258,18 +252,6 @@ impl ProverStateManager {
             }
             CircuitPersistence::Disk(strategy) => {
                 info!("attempting to load preprocessed circuits from disk...");
-
-                // Check the package consistency before loading the circuits.
-                pkg_consistency_check([
-                    self.circuit_config
-                        .as_all_recursive_circuits()
-                        .block
-                        .circuit
-                        .verifier_only
-                        .circuit_digest
-                        .to_bytes(),
-                    KERNEL.hash().to_fixed_bytes().to_vec(),
-                ]);
 
                 let disk_state = match strategy {
                     TableLoadStrategy::OnDemand => BaseProverResource::get(&self.circuit_config),

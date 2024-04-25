@@ -19,6 +19,7 @@ pub(crate) async fn jerigon_main(
     checkpoint_block_number: u64,
     previous: Option<PlonkyProofIntern>,
     proof_output_dir_opt: Option<PathBuf>,
+    save_inputs_on_error: bool,
 ) -> Result<()> {
     let mut previous = previous;
 
@@ -38,6 +39,7 @@ pub(crate) async fn jerigon_main(
             previous,
             &prev_hashes,
             &proof_output_dir_opt,
+            save_inputs_on_error,
         )
         .await?;
 
@@ -59,6 +61,7 @@ async fn process_block(
     previous: Option<PlonkyProofIntern>,
     prev_hashes: &Vec<H256>,
     proof_output_dir_opt: &Option<PathBuf>,
+    save_inputs_on_error: bool,
 ) -> Result<(H256, Option<PlonkyProofIntern>)> {
     let prover_input = rpc::fetch_prover_input(rpc::FetchProverInputRequest {
         rpc_url,
@@ -69,7 +72,9 @@ async fn process_block(
     .await?;
 
     let curr_hash = prover_input.other_data.b_data.b_hashes.cur_hash;
-    let proof = prover_input.prove(runtime, previous).await?;
+    let proof = prover_input
+        .prove(&runtime, previous, save_inputs_on_error)
+        .await?;
 
     let proof_json = serde_json::to_vec(&proof.intern)?;
     write_proof(
