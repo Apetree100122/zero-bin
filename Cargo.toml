@@ -21,9 +21,9 @@ keccak-hash = "0.10.0"
 
 # zk-evm dependencies
 plonky2 = "0.2.2"
-evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "segment-indexing" }
-trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "segment-indexing" }
-proof_gen =  { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "segment-indexing" }
+evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/continuations" }
+trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/continuations" }
+proof_gen =  { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/continuations" }
 
 [workspace.package]
 edition = "2021"
