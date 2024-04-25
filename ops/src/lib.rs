@@ -20,9 +20,7 @@ use tracing::{error, event, info_span, Level};
 registry!();
 
 #[derive(Deserialize, Serialize, RemoteExecute)]
-pub struct SegmentProof {
-    pub save_inputs_on_error: bool,
-}
+pub struct SegmentProof;
 
 #[cfg(not(feature = "test_only"))]
 impl Operation for SegmentProof {
@@ -31,27 +29,9 @@ impl Operation for SegmentProof {
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
         let _span = SegmentProofSpan::new(&input);
-        let proof = if self.save_inputs_on_error {
-            common::prover_state::p_manager()
-                .generate_segment_proof(input.clone())
-                .map_err(|err| {
-                    if let Err(write_err) = save_inputs_to_disk(
-                        format!(
-                            "b{}_txn_{}_input.log",
-                            input.0.block_metadata.block_number, input.0.txn_number_before
-                        ),
-                        input,
-                    ) {
-                        error!("Failed to save txn proof input to disk: {:?}", write_err);
-                    }
-
-                    FatalError::from_anyhow(err, FatalStrategy::Terminate)
-                })?
-        } else {
-            common::prover_state::p_manager()
-                .generate_segment_proof(input)
-                .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?
-        };
+        let proof = common::prover_state::p_manager()
+            .generate_segment_proof(input)
+            .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
 
         Ok(proof.into())
     }
@@ -65,31 +45,11 @@ impl Operation for SegmentProof {
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
         let _span = SegmentProofSpan::new(&input);
 
-        if self.save_inputs_on_error {
-            evm_arithmetization::prover::testing::simulate_execution::<proof_gen::types::Field>(
-                input.0,
-                Some(input.1),
-            )
-            .map_err(|err| {
-                if let Err(write_err) = save_inputs_to_disk(
-                    format!(
-                        "b{}_txn_{}_input.log",
-                        input.0.block_metadata.block_number, input.0.txn_number_before
-                    ),
-                    input.0,
-                ) {
-                    error!("Failed to save txn proof input to disk: {:?}", write_err);
-                }
-
-                FatalError::from_anyhow(err, FatalStrategy::Terminate)
-            })?;
-        } else {
-            evm_arithmetization::prover::testing::simulate_execution::<proof_gen::types::Field>(
-                input.0,
-                Some(input.1),
-            )
-            .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
-        }
+        evm_arithmetization::prover::testing::simulate_execution::<proof_gen::types::Field>(
+            input.0,
+            Some(input.1),
+        )
+        .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
 
         Ok(())
     }
@@ -155,11 +115,9 @@ impl Drop for SegmentProofSpan {
 }
 
 #[derive(Deserialize, Serialize, RemoteExecute)]
-pub struct SegmentAggProof {
-    pub save_inputs_on_error: bool,
-}
+pub struct SegmentAggProof;
 
-fn get_seg_agg_proof_public_values(elem: SegmentAggregatableProof) -> PublicValues {
+fn _get_seg_agg_proof_public_values(elem: SegmentAggregatableProof) -> PublicValues {
     match elem {
         SegmentAggregatableProof::Txn(info) => info.p_vals,
         SegmentAggregatableProof::Agg(info) => info.p_vals,
@@ -170,25 +128,8 @@ impl Monoid for SegmentAggProof {
     type Elem = SegmentAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let result = generate_segment_agg_proof(p_state(), &a, &b).map_err(|e| {
-            if self.save_inputs_on_error {
-                let pv = vec![
-                    get_seg_agg_proof_public_values(a),
-                    get_seg_agg_proof_public_values(b),
-                ];
-                if let Err(write_err) = save_inputs_to_disk(
-                    format!(
-                        "b{}_agg_lhs_rhs_inputs.log",
-                        pv[0].block_metadata.block_number
-                    ),
-                    pv,
-                ) {
-                    error!("Failed to save agg proof inputs to disk: {:?}", write_err);
-                }
-            }
-
-            FatalError::from(e)
-        })?;
+        let result =
+            generate_segment_agg_proof(p_state(), &a, &b).map_err(|e| FatalError::from(e))?;
 
         Ok(result.into())
     }

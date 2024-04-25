@@ -65,19 +65,12 @@ impl ProverInput {
                     .map(|d| (txn.clone(), d))
                     .collect();
 
-                Directive::map(
-                    IndexedStream::from(cur_data),
-                    &SegmentProof {
-                        save_inputs_on_error,
-                    },
-                )
-                .fold(&ops::SegmentAggProof {
-                    save_inputs_on_error,
-                })
-                .run(runtime)
-                .map(move |e| {
-                    e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
-                })
+                Directive::map(IndexedStream::from(cur_data), &SegmentProof)
+                    .fold(&ops::SegmentAggProof)
+                    .run(runtime)
+                    .map(move |e| {
+                        e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
+                    })
             })
             .collect();
 
