@@ -53,6 +53,7 @@ pub(crate) async fn jerigon_main(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn process_block(
     runtime: &Runtime,
     rpc_url: &str,
@@ -73,7 +74,7 @@ async fn process_block(
 
     let curr_hash = prover_input.other_data.b_data.b_hashes.cur_hash;
     let proof = prover_input
-        .prove(&runtime, previous, save_inputs_on_error)
+        .prove(runtime, previous, save_inputs_on_error)
         .await?;
 
     let proof_json = serde_json::to_vec(&proof.intern)?;
