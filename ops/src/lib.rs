@@ -86,11 +86,11 @@ impl Operation for SegmentProof {
 impl SegmentProof {
     fn seg_ident(all_data: &AllData) -> String {
         let ir = &all_data.0;
-        let txn_hash_str = ir
-            .signed_txn
-            .as_ref()
-            .map(|txn| format!("{:x}", keccak(txn)))
-            .unwrap_or_else(|| "Dummy".to_string());
+        let txn_hash_str = if ir.signed_txns.is_empty() {
+            "Dummy".to_string()
+        } else {
+            format!("{:x}", keccak(ir.signed_txns[0].clone()))
+        };
 
         format!(
             "b{} - {} ({})",

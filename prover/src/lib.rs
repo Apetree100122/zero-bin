@@ -43,11 +43,17 @@ impl ProverInput {
         info!("Proving block {block_number}");
 
         let other_data = self.other_data;
-        let txs = self.block_trace.into_txn_proof_gen_ir(
+        let txs = self.block_trace.into_txns_proof_gen_ir(
             &ProcessingMeta::new(resolve_code_hash_fn),
             other_data.clone(),
+            2,
         )?;
+        // let txs = self.block_trace.into_txn_proof_gen_ir(
+        //     &ProcessingMeta::new(resolve_code_hash_fn),
+        //     other_data.clone(),
+        // )?;
 
+        info!("Generated inputs, first {:?}", txs[0]);
         // Generate segment data.
         type F = GoldilocksField;
 
@@ -57,7 +63,7 @@ impl ProverInput {
             .enumerate()
             .map(|(idx, txn)| {
                 let generated_data =
-                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
+                    generate_all_data_segments::<F>(Some(max_cpu_len_log), &txn.clone())
                         .unwrap_or(vec![GenerationSegmentData::default()]);
 
                 let cur_data: Vec<_> = generated_data
