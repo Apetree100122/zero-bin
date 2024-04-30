@@ -10,7 +10,8 @@ use paladin::{
 use proof_gen::{
     proof_gen::{generate_block_proof, generate_segment_agg_proof, generate_transaction_agg_proof},
     proof_types::{
-        GeneratedBlockProof, GeneratedTxnAggProof, SegmentAggregatableProof, TxnAggregatableProof,
+        GeneratedBlockProof, GeneratedSegmentProof, GeneratedTxnAggProof, SegmentAggregatableProof,
+        TxnAggregatableProof,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -29,9 +30,17 @@ impl Operation for SegmentProof {
 
     fn execute(&self, input: Self::Input) -> Result<Self::Output> {
         let _span = SegmentProofSpan::new(&input);
-        let proof = common::prover_state::p_manager()
-            .generate_segment_proof(input)
-            .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
+        let proof = if input.1.is_dummy() {
+            proof_gen::proof_gen::dummy_proof()
+                .map(|p| GeneratedSegmentProof {
+                    p_vals: PublicValues::default(),
+                    intern: p,
+                })
+                .map_err(|e| e.into())
+        } else {
+            common::prover_state::p_manager().generate_segment_proof(input)
+        }
+        .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
 
         Ok(proof.into())
     }
@@ -117,10 +126,10 @@ impl Drop for SegmentProofSpan {
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct SegmentAggProof;
 
-fn _get_seg_agg_proof_public_values(elem: SegmentAggregatableProof) -> PublicValues {
+fn get_seg_agg_proof_public_values(elem: &SegmentAggregatableProof) -> PublicValues {
     match elem {
-        SegmentAggregatableProof::Txn(info) => info.p_vals,
-        SegmentAggregatableProof::Agg(info) => info.p_vals,
+        SegmentAggregatableProof::Txn(info) => info.p_vals.clone(),
+        SegmentAggregatableProof::Agg(info) => info.p_vals.clone(),
     }
 }
 
@@ -128,8 +137,15 @@ impl Monoid for SegmentAggProof {
     type Elem = SegmentAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let result =
-            generate_segment_agg_proof(p_state(), &a, &b).map_err(|e| FatalError::from(e))?;
+        // TODO Robin: Check dummy directly in public values
+        let result = generate_segment_agg_proof(
+            p_state(),
+            &a,
+            &b,
+            get_seg_agg_proof_public_values(&b).registers_before
+                == get_seg_agg_proof_public_values(&b).registers_after,
+        )
+        .map_err(|e| FatalError::from(e))?;
 
         Ok(result.into())
     }
