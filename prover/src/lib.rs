@@ -56,9 +56,9 @@ impl ProverInput {
             .into_iter()
             .enumerate()
             .map(|(idx, txn)| {
-                let generated_data =
-                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
-                        .unwrap_or(vec![GenerationSegmentData::default()]);
+                let generated_data = generate_all_data_segments::<F>(Some(max_cpu_len_log), &txn)
+                    .unwrap_or(vec![GenerationSegmentData::default()]);
+                info!("generated data length {:?}", generated_data.len());
 
                 let cur_data: Vec<_> = generated_data
                     .into_iter()

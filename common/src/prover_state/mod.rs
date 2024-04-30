@@ -17,17 +17,20 @@ use clap::ValueEnum;
 use evm_arithmetization::{
     cpu::kernel::aggregator::KERNEL,
     fixed_recursive_verifier::ProverOutputData,
-    proof::AllProof,
+    proof::{AllProof, PublicValues},
     prover::{prove, GenerationSegmentData},
-    AllStark, StarkConfig,
+    AllStark, GenerationInputs, StarkConfig,
 };
 use plonky2::{
     field::goldilocks_field::GoldilocksField,
     plonk::config::{GenericHashOut, PoseidonGoldilocksConfig},
     util::timing::TimingTree,
 };
-use proof_gen::{proof_types::GeneratedSegmentProof, prover_state::ProverState, VerifierState};
-use trace_decoder::types::{AllData, TxnProofGenIR};
+use proof_gen::{
+    proof_gen::dummy_proof, proof_types::GeneratedSegmentProof, prover_state::ProverState,
+    VerifierState,
+};
+use trace_decoder::types::AllData;
 use tracing::info;
 
 use self::circuit::{CircuitConfig, NUM_TABLES};
@@ -202,7 +205,7 @@ impl ProverStateManager {
     /// finally aggregating them to a final transaction proof.
     fn segment_proof_on_demand(
         &self,
-        input: TxnProofGenIR,
+        input: GenerationInputs,
         segment_data: &mut GenerationSegmentData,
     ) -> anyhow::Result<GeneratedSegmentProof> {
         let config = StarkConfig::standard_fast_config();
@@ -231,17 +234,27 @@ impl ProverStateManager {
     /// circuit.
     fn segment_proof_monolithic(
         &self,
-        input: TxnProofGenIR,
+        input: GenerationInputs,
         segment_data: &mut GenerationSegmentData,
     ) -> anyhow::Result<GeneratedSegmentProof> {
-        let p_out = p_state().state.prove_segment(
-            &AllStark::default(),
-            &StarkConfig::standard_fast_config(),
-            input.clone(),
-            segment_data,
-            &mut TimingTree::default(),
-            None,
-        )?;
+        let is_dummy = segment_data.is_dummy();
+        let p_out = if is_dummy {
+            let dummy_proof = dummy_proof()?;
+            ProverOutputData {
+                proof_with_pis: dummy_proof,
+                public_values: PublicValues::default(),
+            }
+        } else {
+            p_state().state.prove_segment(
+                &AllStark::default(),
+                &StarkConfig::standard_fast_config(),
+                input.clone(),
+                segment_data,
+                &mut TimingTree::default(),
+                None,
+            )?
+        };
+
         let ProverOutputData {
             proof_with_pis: intern,
             public_values: p_vals,
