@@ -1037,7 +1037,7 @@ dependencies = [
 [[package]]
 name = "evm_arithmetization"
 version = "0.1.3"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?tag=v0.3.1#c55f9e05f571b1b8658315e6de83427fe1d4efa3"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#bfc622a11cc22e4dc95c05e285b7305b7fa0dd56"
 dependencies = [
  "anyhow",
  "bytes",
@@ -1971,7 +1971,7 @@ dependencies = [
 [[package]]
 name = "mpt_trie"
 version = "0.2.1"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?tag=v0.3.1#c55f9e05f571b1b8658315e6de83427fe1d4efa3"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#bfc622a11cc22e4dc95c05e285b7305b7fa0dd56"
 dependencies = [
  "bytes",
  "enum-as-inner",
@@ -2529,7 +2529,7 @@ dependencies = [
 [[package]]
 name = "proof_gen"
 version = "0.1.3"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?tag=v0.3.1#c55f9e05f571b1b8658315e6de83427fe1d4efa3"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#bfc622a11cc22e4dc95c05e285b7305b7fa0dd56"
 dependencies = [
  "ethereum-types",
  "evm_arithmetization",
@@ -2537,6 +2537,7 @@ dependencies = [
  "paste",
  "plonky2",
  "serde",
+ "trace_decoder",
 ]
 
 [[package]]
@@ -3152,9 +3153,9 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "starky"
-version = "0.4.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a8480ca5b8eedf83ad070a780783b4e21a56c6ef66b4c0d1b7520b72bdfda1b"
+checksum = "acf2fe03f53197fbd5e2f2e5fbb809f8e953881cc729261b55f71134323bbfd6"
 dependencies = [
  "ahash",
  "anyhow",
@@ -3517,8 +3518,8 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "trace_decoder"
-version = "0.3.1"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?tag=v0.3.1#c55f9e05f571b1b8658315e6de83427fe1d4efa3"
+version = "0.3.0"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#bfc622a11cc22e4dc95c05e285b7305b7fa0dd56"
 dependencies = [
  "bytes",
  "ciborium",

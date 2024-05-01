@@ -21,9 +21,9 @@ keccak-hash = "0.10.0"
 
 # zk-evm dependencies
 plonky2 = "0.2.2"
-evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.3.1" }
-trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.3.1" }
-proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.3.1" }
+evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/cancun" }
+trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/cancun" }
+proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/cancun" }
 
 [workspace.package]
 edition = "2021"
