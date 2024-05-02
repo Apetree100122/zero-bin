@@ -106,7 +106,8 @@ impl Monoid for SegmentAggProof {
     type Elem = SegmentAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let result = generate_segment_agg_proof(p_state(), &a, &b).map_err(FatalError::from)?;
+        let result =
+            generate_segment_agg_proof(p_state(), &a, &b, false).map_err(FatalError::from)?;
 
         Ok(result.into())
     }
@@ -130,6 +131,7 @@ impl Monoid for TxnAggProof {
                     p_state(),
                     &SegmentAggregatableProof::from(segment.clone()),
                     &SegmentAggregatableProof::from(segment),
+                    true,
                 )
                 .map_err(FatalError::from)?,
             ),
@@ -142,6 +144,7 @@ impl Monoid for TxnAggProof {
                     p_state(),
                     &SegmentAggregatableProof::from(segment.clone()),
                     &SegmentAggregatableProof::from(segment),
+                    true,
                 )
                 .map_err(FatalError::from)?,
             ),
