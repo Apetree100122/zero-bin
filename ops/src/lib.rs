@@ -124,7 +124,31 @@ impl Monoid for TxnAggProof {
     type Elem = TxnAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let result = generate_transaction_agg_proof(p_state(), &a, &b).map_err(FatalError::from)?;
+        let lhs = match a {
+            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
+                generate_segment_agg_proof(
+                    p_state(),
+                    &SegmentAggregatableProof::from(segment.clone()),
+                    &SegmentAggregatableProof::from(segment),
+                )
+                .map_err(FatalError::from)?,
+            ),
+            _ => a,
+        };
+
+        let rhs = match b {
+            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
+                generate_segment_agg_proof(
+                    p_state(),
+                    &SegmentAggregatableProof::from(segment.clone()),
+                    &SegmentAggregatableProof::from(segment),
+                )
+                .map_err(FatalError::from)?,
+            ),
+            _ => b,
+        };
+        let result =
+            generate_transaction_agg_proof(p_state(), &lhs, &rhs).map_err(FatalError::from)?;
 
         Ok(result.into())
     }
