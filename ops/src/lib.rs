@@ -137,15 +137,8 @@ impl Monoid for SegmentAggProof {
     type Elem = SegmentAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        // TODO Robin: Check dummy directly in public values
-        let result = generate_segment_agg_proof(
-            p_state(),
-            &a,
-            &b,
-            get_seg_agg_proof_public_values(&b).registers_before
-                == get_seg_agg_proof_public_values(&b).registers_after,
-        )
-        .map_err(|e| FatalError::from(e))?;
+        let result =
+            generate_segment_agg_proof(p_state(), &a, &b, false).map_err(FatalError::from)?;
 
         Ok(result.into())
     }
@@ -172,25 +165,33 @@ impl Monoid for TxnAggProof {
     type Elem = TxnAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let result = generate_transaction_agg_proof(p_state(), &a, &b).map_err(|e| {
-            if self.save_inputs_on_error {
-                let pv = vec![
-                    get_txn_agg_proof_public_values(a),
-                    get_txn_agg_proof_public_values(b),
-                ];
-                if let Err(write_err) = save_inputs_to_disk(
-                    format!(
-                        "b{}_agg_lhs_rhs_inputs.log",
-                        pv[0].block_metadata.block_number
-                    ),
-                    pv,
-                ) {
-                    error!("Failed to save agg proof inputs to disk: {:?}", write_err);
-                }
-            }
+        let lhs = match a {
+            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
+                generate_segment_agg_proof(
+                    p_state(),
+                    &SegmentAggregatableProof::from(segment.clone()),
+                    &SegmentAggregatableProof::from(segment),
+                    true,
+                )
+                .map_err(FatalError::from)?,
+            ),
+            _ => a,
+        };
 
-            FatalError::from(e)
-        })?;
+        let rhs = match b {
+            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
+                generate_segment_agg_proof(
+                    p_state(),
+                    &SegmentAggregatableProof::from(segment.clone()),
+                    &SegmentAggregatableProof::from(segment),
+                    true,
+                )
+                .map_err(FatalError::from)?,
+            ),
+            _ => b,
+        };
+        let result =
+            generate_transaction_agg_proof(p_state(), &lhs, &rhs).map_err(FatalError::from)?;
 
         Ok(result.into())
     }

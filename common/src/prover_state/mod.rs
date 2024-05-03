@@ -236,7 +236,9 @@ impl ProverStateManager {
             &mut TimingTree::default(),
             None,
         )?;
+
         let ProverOutputData {
+            is_dummy: _,
             proof_with_pis: intern,
             public_values: p_vals,
         } = p_out;
