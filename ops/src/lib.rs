@@ -126,13 +126,6 @@ impl Drop for SegmentProofSpan {
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct SegmentAggProof;
 
-fn get_seg_agg_proof_public_values(elem: &SegmentAggregatableProof) -> PublicValues {
-    match elem {
-        SegmentAggregatableProof::Txn(info) => info.p_vals.clone(),
-        SegmentAggregatableProof::Agg(info) => info.p_vals.clone(),
-    }
-}
-
 impl Monoid for SegmentAggProof {
     type Elem = SegmentAggregatableProof;
 
@@ -152,13 +145,6 @@ impl Monoid for SegmentAggProof {
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct TxnAggProof {
     pub save_inputs_on_error: bool,
-}
-
-fn get_txn_agg_proof_public_values(elem: TxnAggregatableProof) -> PublicValues {
-    match elem {
-        TxnAggregatableProof::Txn(info) => info.p_vals,
-        TxnAggregatableProof::Agg(info) => info.p_vals,
-    }
 }
 
 impl Monoid for TxnAggProof {
