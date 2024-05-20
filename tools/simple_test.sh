@@ -3,13 +3,13 @@
 # This is meant to be a somewhat self contained script for quickly
 # proving an Ethereum mainnet block with the type 1 prover. The goal
 # is to use this for benchmarking and CI. This is the block in
-# question: https://etherscan.io/block/19240705
+# question: https://etherscan.io/block/19807080.
 
 # We're going to set the paralellism in line with the total cpu count
 num_procs=$(nproc)
 
 2>&1 echo "Pulling sample witness"
-witness_cid_hash="QmbwnLGuZ2qxZDqETAFb5DnyjZry8Sv3UFwYnsgKmsE3of"
+witness_cid_hash="QmcdPJPv9BGJGesp9z7azp2eowUAMPAaEW9XVdaRYNRZsy"
 curl -s -L "https://cf-ipfs.com/ipfs/$witness_cid_hash" > witness.json.bz2
 bunzip2 -f witness.json.bz2
 
@@ -33,12 +33,12 @@ if [[ $1 == "test_only" ]]; then
     export MEMORY_CIRCUIT_SIZE="17..18"
 else
     # These sizes are configured specifically for this witness. Don't use this in other scenarios
-    export ARITHMETIC_CIRCUIT_SIZE="16..19"
-    export BYTE_PACKING_CIRCUIT_SIZE="16..19"
-    export CPU_CIRCUIT_SIZE="18..21"
-    export KECCAK_CIRCUIT_SIZE="15..18"
+    export ARITHMETIC_CIRCUIT_SIZE="16..18"
+    export BYTE_PACKING_CIRCUIT_SIZE="15..19"
+    export CPU_CIRCUIT_SIZE="17..21"
+    export KECCAK_CIRCUIT_SIZE="14..17"
     export KECCAK_SPONGE_CIRCUIT_SIZE="10..13"
-    export LOGIC_CIRCUIT_SIZE="13..17"
+    export LOGIC_CIRCUIT_SIZE="13..16"
     export MEMORY_CIRCUIT_SIZE="20..23"
 fi
 
