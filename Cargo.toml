@@ -19,9 +19,9 @@ futures = "0.3.29"
 
 # zk-evm dependencies
 plonky2 = "0.2.2"
-evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "all_data_for_zero_bin_next_segment" }
-trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "all_data_for_zero_bin_next_segment" }
-proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "all_data_for_zero_bin_next_segment" }
+evm_arithmetization = { path = "/Users/lindaguiga/toposware/topos-protocol/zk_evm/evm_arithmetization" }
+trace_decoder = { path = "/Users/lindaguiga/toposware/topos-protocol/zk_evm/trace_decoder" }
+proof_gen = { path = "/Users/lindaguiga/toposware/topos-protocol/zk_evm/proof_gen" }
 
 [workspace.package]
 edition = "2021"

@@ -18,14 +18,14 @@ use evm_arithmetization::{
     fixed_recursive_verifier::ProverOutputData,
     proof::AllProof,
     prover::{prove, GenerationSegmentData},
-    AllStark, StarkConfig,
+    AllStark, GenerationInputs, StarkConfig,
 };
 use plonky2::{
     field::goldilocks_field::GoldilocksField, plonk::config::PoseidonGoldilocksConfig,
     util::timing::TimingTree,
 };
 use proof_gen::{proof_types::GeneratedSegmentProof, prover_state::ProverState, VerifierState};
-use trace_decoder::types::{AllData, TxnProofGenIR};
+use trace_decoder::types::AllData;
 use tracing::info;
 
 use self::circuit::{CircuitConfig, NUM_TABLES};
@@ -196,7 +196,7 @@ impl ProverStateManager {
     /// finally aggregating them to a final transaction proof.
     fn segment_proof_on_demand(
         &self,
-        input: TxnProofGenIR,
+        input: GenerationInputs,
         segment_data: &mut GenerationSegmentData,
     ) -> anyhow::Result<GeneratedSegmentProof> {
         let config = StarkConfig::standard_fast_config();
@@ -225,7 +225,7 @@ impl ProverStateManager {
     /// circuit.
     fn segment_proof_monolithic(
         &self,
-        input: TxnProofGenIR,
+        input: GenerationInputs,
         segment_data: &mut GenerationSegmentData,
     ) -> anyhow::Result<GeneratedSegmentProof> {
         let p_out = p_state().state.prove_segment(
