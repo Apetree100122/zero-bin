@@ -26,9 +26,9 @@ alloy = { git = "https://github.com/alloy-rs/alloy", features = [
 
 # zk-evm dependencies
 plonky2 = "0.2.2"
-evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.3.1" }
-trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.3.1" }
-proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.3.1" }
+evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/smt_txn_traces" }
+trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/smt_txn_traces", features = ["mpt"] }
+proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", branch = "feat/smt_txn_traces" }
 
 [workspace.package]
 edition = "2021"
