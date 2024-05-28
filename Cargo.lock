@@ -1748,7 +1748,7 @@ dependencies = [
 [[package]]
 name = "evm_arithmetization"
 version = "0.1.3"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#c610b93e1346823ae0f12ec47eb14e4e41a9a5a5"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#82d49012af1b5296c8ec8afc9f9a8fcde51c4a69"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2753,7 +2753,7 @@ dependencies = [
 [[package]]
 name = "mpt_trie"
 version = "0.2.1"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#c610b93e1346823ae0f12ec47eb14e4e41a9a5a5"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#82d49012af1b5296c8ec8afc9f9a8fcde51c4a69"
 dependencies = [
  "bytes",
  "enum-as-inner",
@@ -3424,7 +3424,7 @@ dependencies = [
 [[package]]
 name = "proof_gen"
 version = "0.1.3"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#c610b93e1346823ae0f12ec47eb14e4e41a9a5a5"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#82d49012af1b5296c8ec8afc9f9a8fcde51c4a69"
 dependencies = [
  "ethereum-types",
  "evm_arithmetization",
@@ -4618,7 +4618,7 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 [[package]]
 name = "trace_decoder"
 version = "0.3.1"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#c610b93e1346823ae0f12ec47eb14e4e41a9a5a5"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=feat/cancun#82d49012af1b5296c8ec8afc9f9a8fcde51c4a69"
 dependencies = [
  "bytes",
  "ciborium",
