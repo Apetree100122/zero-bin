@@ -21,8 +21,7 @@ use tracing::info;
 type F = GoldilocksField;
 
 struct SegmentDataIterator {
-    current_data: Option<GenerationSegmentData>,
-    next_data: Option<GenerationSegmentData>,
+    partial_next_data: Option<GenerationSegmentData>,
     inputs: GenerationInputs,
     max_cpu_len_log: Option<usize>,
     nb_segments: usize,
@@ -32,18 +31,20 @@ impl Iterator for SegmentDataIterator {
     type Item = (GenerationInputs, GenerationSegmentData);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let cur_and_next_data =
-            generate_next_segment::<F>(self.max_cpu_len_log, &self.inputs, self.next_data.clone());
+        let cur_and_next_data = generate_next_segment::<F>(
+            self.max_cpu_len_log,
+            &self.inputs,
+            self.partial_next_data.clone(),
+        );
 
         if cur_and_next_data.is_some() {
             let (data, next_data) = cur_and_next_data.expect("Data cannot be `None`");
             self.nb_segments += 1;
-            self.current_data = Some(data.clone());
-            self.next_data = next_data;
+            self.partial_next_data = next_data;
             Some((self.inputs.clone(), data))
         } else {
             if self.nb_segments == 1 {
-                let data = self.current_data.clone().expect("eyo");
+                let data = self.partial_next_data.clone().expect("eyo");
                 Some((self.inputs.clone(), make_dummy_segment_data(data)))
             } else {
                 None
@@ -93,8 +94,7 @@ impl ProverInput {
             .enumerate()
             .map(|(idx, txn)| {
                 let data_iterator = SegmentDataIterator {
-                    current_data: None,
-                    next_data: None,
+                    partial_next_data: None,
                     inputs: txn,
                     max_cpu_len_log: Some(max_cpu_len_log),
                     nb_segments: 0,
