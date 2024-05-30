@@ -10,13 +10,16 @@ pub(crate) async fn stdio_main(
     runtime: Runtime,
     previous: Option<PlonkyProofIntern>,
     max_cpu_len_log: usize,
+    batch_size: usize,
 ) -> Result<()> {
     let mut buffer = String::new();
     std::io::stdin().read_to_string(&mut buffer)?;
 
     let des = &mut serde_json::Deserializer::from_str(&buffer);
     let input: ProverInput = serde_path_to_error::deserialize(des)?;
-    let proof = input.prove(&runtime, max_cpu_len_log, previous).await;
+    let proof = input
+        .prove(&runtime, max_cpu_len_log, previous, batch_size)
+        .await;
     runtime.close().await?;
     let proof = proof?;
 

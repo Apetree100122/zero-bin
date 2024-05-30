@@ -17,6 +17,7 @@ pub(crate) async fn jerigon_main(
     max_cpu_len: usize,
     previous: Option<PlonkyProofIntern>,
     proof_output_path_opt: Option<PathBuf>,
+    batch_size: usize,
 ) -> Result<()> {
     let prover_input = rpc::fetch_prover_input(rpc::FetchProverInputRequest {
         rpc_url,
@@ -25,7 +26,9 @@ pub(crate) async fn jerigon_main(
     })
     .await?;
 
-    let proof = prover_input.prove(&runtime, max_cpu_len, previous).await;
+    let proof = prover_input
+        .prove(&runtime, max_cpu_len, previous, batch_size)
+        .await;
     runtime.close().await?;
 
     let proof = serde_json::to_vec(&proof?.intern)?;

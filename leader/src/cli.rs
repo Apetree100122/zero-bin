@@ -27,6 +27,8 @@ pub(crate) enum Command {
         previous_proof: Option<PathBuf>,
         #[arg(short, default_value_t = 20)]
         max_cpu_len_log: usize,
+        #[arg(short, long, default_value_t = 2)]
+        batch_size: usize,
     },
     /// Reads input from a Jerigon node and writes output to stdout.
     Jerigon {
@@ -49,6 +51,8 @@ pub(crate) enum Command {
         /// The log of the max number of CPU cycles per proof.
         #[arg(short, long, default_value_t = 20)]
         max_cpu_len_log: usize,
+        #[arg(short, long, default_value_t = 2)]
+        batch_size: usize,
     },
     /// Reads input from HTTP and writes output to a directory.
     Http {
@@ -60,5 +64,7 @@ pub(crate) enum Command {
         output_dir: PathBuf,
         #[arg(short, default_value_t = 20)]
         max_cpu_len_log: usize,
+        #[arg(short, long, default_value_t = 2)]
+        batch_size: usize,
     },
 }
