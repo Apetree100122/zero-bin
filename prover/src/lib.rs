@@ -1,14 +1,9 @@
 use anyhow::Result;
 use ethereum_types::U256;
-use evm_arithmetization::prover::{
-    generate_next_segment, make_dummy_segment_data, GenerationSegmentData,
-};
-use evm_arithmetization::GenerationInputs;
 use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
 };
-use plonky2::field::goldilocks_field::GoldilocksField;
 use proof_gen::{proof_types::GeneratedBlockProof, types::PlonkyProofIntern};
 use serde::{Deserialize, Serialize};
 use trace_decoder::{
@@ -17,42 +12,6 @@ use trace_decoder::{
     types::{CodeHash, OtherBlockData},
 };
 use tracing::info;
-
-type F = GoldilocksField;
-
-struct SegmentDataIterator {
-    partial_next_data: Option<GenerationSegmentData>,
-    inputs: GenerationInputs,
-    max_cpu_len_log: Option<usize>,
-    nb_segments: usize,
-}
-
-impl Iterator for SegmentDataIterator {
-    type Item = (GenerationInputs, GenerationSegmentData);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let cur_and_next_data = generate_next_segment::<F>(
-            self.max_cpu_len_log,
-            &self.inputs,
-            self.partial_next_data.clone(),
-        );
-
-        if cur_and_next_data.is_some() {
-            let (data, next_data) = cur_and_next_data.expect("Data cannot be `None`");
-            self.nb_segments += 1;
-            self.partial_next_data = next_data;
-            Some((self.inputs.clone(), data))
-        } else {
-            if self.nb_segments == 1 {
-                let data = self.partial_next_data.clone().expect("eyo");
-                self.nb_segments += 1;
-                Some((self.inputs.clone(), make_dummy_segment_data(data)))
-            } else {
-                None
-            }
-        }
-    }
-}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProverInput {
@@ -75,6 +34,7 @@ impl ProverInput {
         max_cpu_len_log: usize,
         previous: Option<PlonkyProofIntern>,
     ) -> Result<GeneratedBlockProof> {
+        use evm_arithmetization::prover::SegmentDataIterator;
         use futures::{stream::FuturesUnordered, FutureExt};
         use ops::SegmentProof;
 
