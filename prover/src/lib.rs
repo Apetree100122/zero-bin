@@ -45,6 +45,7 @@ impl Iterator for SegmentDataIterator {
         } else {
             if self.nb_segments == 1 {
                 let data = self.partial_next_data.clone().expect("eyo");
+                self.nb_segments += 1;
                 Some((self.inputs.clone(), make_dummy_segment_data(data)))
             } else {
                 None
