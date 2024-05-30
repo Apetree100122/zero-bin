@@ -46,6 +46,7 @@ impl ProverInput {
         let txs = self.block_trace.into_txn_proof_gen_ir(
             &ProcessingMeta::new(resolve_code_hash_fn),
             other_data.clone(),
+            1,
         )?;
 
         // Generate segment data.
