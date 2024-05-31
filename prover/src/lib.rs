@@ -33,6 +33,7 @@ impl ProverInput {
         runtime: &Runtime,
         max_cpu_len_log: usize,
         previous: Option<PlonkyProofIntern>,
+        batch_size: usize,
     ) -> Result<GeneratedBlockProof> {
         use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
         use futures::{stream::FuturesUnordered, FutureExt};
@@ -46,6 +47,7 @@ impl ProverInput {
         let txs = self.block_trace.into_txn_proof_gen_ir(
             &ProcessingMeta::new(resolve_code_hash_fn),
             other_data.clone(),
+            batch_size,
         )?;
 
         // Generate segment data.
@@ -56,9 +58,8 @@ impl ProverInput {
             .into_iter()
             .enumerate()
             .map(|(idx, txn)| {
-                let generated_data =
-                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
-                        .unwrap_or(vec![GenerationSegmentData::default()]);
+                let generated_data = generate_all_data_segments::<F>(Some(max_cpu_len_log), &txn)
+                    .unwrap_or(vec![GenerationSegmentData::default()]);
 
                 let cur_data: Vec<_> = generated_data
                     .into_iter()
