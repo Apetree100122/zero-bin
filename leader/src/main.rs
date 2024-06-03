@@ -50,14 +50,16 @@ async fn main() -> Result<()> {
         Command::Stdio {
             previous_proof,
             max_cpu_len_log,
+            batch_size,
         } => {
             let previous_proof = get_previous_proof(previous_proof)?;
-            stdio::stdio_main(runtime, previous_proof, max_cpu_len_log).await?;
+            stdio::stdio_main(runtime, previous_proof, max_cpu_len_log, batch_size).await?;
         }
         Command::Http {
             port,
             output_dir,
             max_cpu_len_log,
+            batch_size,
         } => {
             // check if output_dir exists, is a directory, and is writable
             let output_dir_metadata = std::fs::metadata(&output_dir);
@@ -68,7 +70,7 @@ async fn main() -> Result<()> {
                 panic!("output-dir is not a writable directory");
             }
 
-            http::http_main(runtime, port, output_dir, max_cpu_len_log).await?;
+            http::http_main(runtime, port, output_dir, max_cpu_len_log, batch_size).await?;
         }
         Command::Jerigon {
             rpc_url,
@@ -77,6 +79,7 @@ async fn main() -> Result<()> {
             previous_proof,
             proof_output_path,
             max_cpu_len_log,
+            batch_size,
         } => {
             let previous_proof = get_previous_proof(previous_proof)?;
 
@@ -88,6 +91,7 @@ async fn main() -> Result<()> {
                 max_cpu_len_log,
                 previous_proof,
                 proof_output_path,
+                batch_size,
             )
             .await?;
         }
