@@ -71,8 +71,7 @@ impl Operation for SegmentProof {
         run_and_wrap_txn_proof_in_elapsed_span(
             || {
                 evm_arithmetization::prover::testing::simulate_execution::<proof_gen::types::Field>(
-                    input.0,
-                    Some(input.1),
+                    input.0.clone(),
                 )
                 .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate).into())
             },

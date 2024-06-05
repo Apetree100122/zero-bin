@@ -1,5 +1,7 @@
 use anyhow::Result;
 use ethereum_types::U256;
+#[cfg(feature = "test_only")]
+use futures::TryStreamExt;
 use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
@@ -103,13 +105,12 @@ impl ProverInput {
     #[cfg(feature = "test_only")]
     pub async fn prove(
         self,
-        runtime: &Runtime,
+        _runtime: &Runtime,
         max_cpu_len_log: usize,
         _previous: Option<PlonkyProofIntern>,
+        batch_size: usize,
     ) -> Result<GeneratedBlockProof> {
-        use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
-        use futures::stream::FuturesOrdered;
-        use ops::SegmentProof;
+        use evm_arithmetization::prover::testing::simulate_all_segments_interpreter;
         use plonky2::field::goldilocks_field::GoldilocksField;
 
         let block_number = self.get_block_number();
@@ -119,28 +120,13 @@ impl ProverInput {
         let txs = self.block_trace.into_txn_proof_gen_ir(
             &ProcessingMeta::new(resolve_code_hash_fn),
             other_data.clone(),
+            batch_size,
         )?;
 
         type F = GoldilocksField;
-        let mut cur_data = vec![];
-        let tx_proof_futs: FuturesOrdered<_> = txs
-            .iter()
-            .map(|txn| {
-                let generated_data =
-                    generate_all_data_segments::<F>(Some(max_cpu_len_log), txn.clone())
-                        .unwrap_or(vec![GenerationSegmentData::default()]);
-                info!("Generated all data");
-                cur_data = generated_data
-                    .iter()
-                    .map(|d| (txn.clone(), max_cpu_len_log, d.clone()))
-                    .collect();
-                IndexedStream::from(cur_data.clone())
-                    .map(&SegmentProof)
-                    .run(runtime)
-            })
-            .collect();
-
-        let _ = TryStreamExt::try_collect::<Vec<_>>(tx_proof_futs).await?;
+        for txn in txs.into_iter() {
+            simulate_all_segments_interpreter::<F>(txn, max_cpu_len_log)?;
+        }
 
         info!("Successfully generated witness for block {block_number}.");
 
