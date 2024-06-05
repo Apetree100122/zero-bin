@@ -1,5 +1,5 @@
 use anyhow::Result;
-use ethereum_types::U256;
+use ethereum_types::{H256, U256};
 #[cfg(feature = "test_only")]
 use futures::stream::TryStreamExt;
 use ops::TxProof;
@@ -10,6 +10,7 @@ use paladin::{
 use proof_gen::{proof_types::GeneratedBlockProof, types::PlonkyProofIntern};
 use serde::{Deserialize, Serialize};
 use trace_decoder::{
+    processed_block_trace::CodeHashMeta,
     trace_protocol::BlockTrace,
     types::{CodeHash, OtherBlockData},
 };
@@ -21,6 +22,10 @@ pub struct ProverInput {
     pub other_data: OtherBlockData,
 }
 fn resolve_code_hash_fn(_: &CodeHash) -> Vec<u8> {
+    todo!()
+}
+
+fn insert_code(_: H256, _: Vec<u8>) {
     todo!()
 }
 
@@ -40,9 +45,13 @@ impl ProverInput {
         info!("Proving block {block_number}");
 
         let other_data = self.other_data;
-        let txs = self
-            .block_trace
-            .into_proof_gen_mpt_ir(&resolve_code_hash_fn, other_data.clone())?;
+        let txs = self.block_trace.into_proof_gen_mpt_ir(
+            &CodeHashMeta {
+                resolve_fn: resolve_code_hash_fn,
+                insert_code_fn: insert_code,
+            },
+            other_data.clone(),
+        )?;
 
         let agg_proof = IndexedStream::from(txs)
             .map(&TxProof {
