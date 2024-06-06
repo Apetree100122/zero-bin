@@ -37,8 +37,9 @@ impl ProverInput {
     ) -> Result<GeneratedBlockProof> {
         use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
         use futures::{stream::FuturesUnordered, FutureExt};
-        use ops::SegmentProof;
+        use ops::{SegmentDummyProof, SegmentProof};
         use plonky2::field::goldilocks_field::GoldilocksField;
+        use proof_gen::proof_types::SegmentAggregatableProof;
 
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
@@ -67,12 +68,19 @@ impl ProverInput {
                     .map(|d| (txn.clone(), d))
                     .collect();
 
-                Directive::map(IndexedStream::from(cur_data), &SegmentProof)
-                    .fold(&ops::SegmentAggProof)
-                    .run(runtime)
-                    .map(move |e| {
-                        e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
-                    })
+                let res = if cur_data.len() == 1 {
+                    Directive::map(IndexedStream::from(cur_data), &SegmentDummyProof)
+                        .fold(&ops::SegmentAggProof)
+                        .run(runtime)
+                } else {
+                    Directive::map(IndexedStream::from(cur_data), &SegmentProof)
+                        .fold(&ops::SegmentAggProof) // This is not doing anything
+                        .run(runtime)
+                };
+
+                res.map(move |e: Result<SegmentAggregatableProof, _>| {
+                    e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
+                })
             })
             .collect();
 

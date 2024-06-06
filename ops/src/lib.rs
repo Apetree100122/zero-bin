@@ -9,7 +9,8 @@ use paladin::{
 use proof_gen::{
     proof_gen::{generate_block_proof, generate_segment_agg_proof, generate_transaction_agg_proof},
     proof_types::{
-        GeneratedBlockProof, GeneratedTxnAggProof, SegmentAggregatableProof, TxnAggregatableProof,
+        GeneratedBlockProof, GeneratedSegmentAggProof, GeneratedTxnAggProof,
+        SegmentAggregatableProof, TxnAggregatableProof,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,9 @@ registry!();
 
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct SegmentProof;
+
+#[derive(Deserialize, Serialize, RemoteExecute)]
+pub struct SegmentDummyProof;
 
 fn run_and_wrap_txn_proof_in_elapsed_span<F, O>(f: F, ident: String) -> Result<O>
 where
@@ -52,6 +56,36 @@ impl Operation for SegmentProof {
                 common::prover_state::p_manager()
                     .generate_segment_proof(input.clone())
                     .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate).into())
+            },
+            seg_ident,
+        )?;
+
+        Ok(proof.into())
+    }
+}
+
+#[cfg(not(feature = "test_only"))]
+impl Operation for SegmentDummyProof {
+    type Input = AllData;
+    type Output = proof_gen::proof_types::SegmentAggregatableProof;
+
+    fn execute(&self, input: Self::Input) -> Result<Self::Output> {
+        let seg_ident = Self::seg_ident(&input);
+
+        let proof: GeneratedSegmentAggProof = run_and_wrap_txn_proof_in_elapsed_span(
+            || {
+                let segment_proof = common::prover_state::p_manager()
+                    .generate_segment_proof(input.clone())
+                    .map_err(|err| FatalError::from_anyhow(err, FatalStrategy::Terminate))?;
+                let result = generate_segment_agg_proof(
+                    p_state(),
+                    &segment_proof.clone().into(),
+                    &segment_proof.into(),
+                    true,
+                )
+                .map_err(|err| FatalError::from(err))?;
+
+                Ok(result.into())
             },
             seg_ident,
         )?;
@@ -98,6 +132,21 @@ impl SegmentProof {
     }
 }
 
+impl SegmentDummyProof {
+    fn seg_ident(all_data: &AllData) -> String {
+        let ir = &all_data.0;
+        let txn_hash_str = if ir.signed_txns.is_empty() {
+            "Dummy".to_string()
+        } else {
+            format!("{:x}", keccak(ir.signed_txns[0].clone()))
+        };
+        format!(
+            "b{} - {} ({})",
+            ir.block_metadata.block_number, ir.txn_number_before, txn_hash_str
+        )
+    }
+}
+
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct SegmentAggProof;
 
@@ -124,33 +173,7 @@ impl Monoid for TxnAggProof {
     type Elem = TxnAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let lhs = match a {
-            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
-                generate_segment_agg_proof(
-                    p_state(),
-                    &SegmentAggregatableProof::from(segment.clone()),
-                    &SegmentAggregatableProof::from(segment),
-                    true,
-                )
-                .map_err(FatalError::from)?,
-            ),
-            _ => a,
-        };
-
-        let rhs = match b {
-            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
-                generate_segment_agg_proof(
-                    p_state(),
-                    &SegmentAggregatableProof::from(segment.clone()),
-                    &SegmentAggregatableProof::from(segment),
-                    true,
-                )
-                .map_err(FatalError::from)?,
-            ),
-            _ => b,
-        };
-        let result =
-            generate_transaction_agg_proof(p_state(), &lhs, &rhs).map_err(FatalError::from)?;
+        let result = generate_transaction_agg_proof(p_state(), &a, &b).map_err(FatalError::from)?;
 
         Ok(result.into())
     }
