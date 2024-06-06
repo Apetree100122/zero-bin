@@ -1,4 +1,5 @@
 use anyhow::Result;
+use common::prover_state::p_state;
 use ethereum_types::U256;
 #[cfg(feature = "test_only")]
 use futures::TryStreamExt;
@@ -41,6 +42,9 @@ impl ProverInput {
         use futures::{stream::FuturesUnordered, FutureExt};
         use ops::SegmentProof;
         use plonky2::field::goldilocks_field::GoldilocksField;
+        use proof_gen::{
+            proof_gen::generate_segment_agg_proof, proof_types::SegmentAggregatableProof,
+        };
 
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
@@ -73,8 +77,29 @@ impl ProverInput {
                     .fold(&ops::SegmentAggProof)
                     .run(runtime)
                     .map(move |e| {
-                        e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
+                        e.map(|p| match p {
+                            SegmentAggregatableProof::Agg(_) => {
+                                (idx, proof_gen::proof_types::TxnAggregatableProof::from(p))
+                            }
+                            SegmentAggregatableProof::Seg(seg) => {
+                                let segment_proof = seg.into();
+                                let single_aggreg = generate_segment_agg_proof(
+                                    p_state(),
+                                    &segment_proof,
+                                    &segment_proof,
+                                    true,
+                                )
+                                .expect("Single-segment aggregation failed?");
+                                (
+                                    idx,
+                                    proof_gen::proof_types::TxnAggregatableProof::from(
+                                        single_aggreg,
+                                    ),
+                                )
+                            }
+                        })
                     })
+                // }
             })
             .collect();
 
