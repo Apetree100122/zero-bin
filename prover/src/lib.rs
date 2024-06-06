@@ -110,6 +110,7 @@ impl ProverInput {
                             }
                         })
                     })
+                // }
             })
             .collect();
 
