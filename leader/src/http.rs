@@ -1,8 +1,8 @@
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 
+use alloy::primitives::U256;
 use anyhow::{bail, Result};
 use axum::{http::StatusCode, routing::post, Json, Router};
-use ethereum_types::U256;
 use paladin::runtime::Runtime;
 use proof_gen::{proof_types::GeneratedBlockProof, types::PlonkyProofIntern};
 use prover::ProverInput;
@@ -17,6 +17,7 @@ pub(crate) async fn http_main(
     output_dir: PathBuf,
     max_cpu_len_log: usize,
     batch_size: usize,
+    save_inputs_on_error: bool,
 ) -> Result<()> {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     debug!("listening on {}", addr);
@@ -33,6 +34,7 @@ pub(crate) async fn http_main(
                     output_dir.clone(),
                     max_cpu_len_log,
                     batch_size,
+                    save_inputs_on_error,
                 )
             }
         }),
@@ -76,6 +78,7 @@ async fn prove(
     output_dir: PathBuf,
     max_cpu_len_log: usize,
     batch_size: usize,
+    save_inputs_on_error: bool,
 ) -> StatusCode {
     debug!("Received payload: {:#?}", payload);
 
@@ -83,7 +86,13 @@ async fn prove(
 
     match payload
         .prover_input
-        .prove(&runtime, max_cpu_len_log, payload.previous, batch_size)
+        .prove(
+            &runtime,
+            max_cpu_len_log,
+            payload.previous,
+            batch_size,
+            save_inputs_on_error,
+        )
         .await
     {
         Ok(b_proof) => match write_to_file(output_dir, block_number, &b_proof) {

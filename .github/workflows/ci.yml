@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - "**"
   workflow_dispatch:
@@ -63,3 +64,29 @@ jobs:
 
       - name: Run cargo clippy
         run: cargo clippy --all-targets -- -D warnings
+
+  simple_proof_regular:
+    name: Execute bash script to generate and verify a proof for a small block.
+    runs-on: zero-ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run the script
+        run: |
+          pushd tools
+          ./simple_test.sh
+
+  simple_proof_witness_only:
+    name: Execute bash script to generate the proof witness for a small block.
+    runs-on: zero-ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run the script
+        run: |
+          pushd tools
+          ./simple_test.sh test_only

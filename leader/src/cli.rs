@@ -29,6 +29,9 @@ pub(crate) enum Command {
         max_cpu_len_log: usize,
         #[arg(short, long, default_value_t = 2)]
         batch_size: usize,
+        /// If true, save the public inputs to disk on error.
+        #[arg(short, long, default_value_t = false)]
+        save_inputs_on_error: bool,
     },
     /// Reads input from a Jerigon node and writes output to stdout.
     Jerigon {
@@ -53,6 +56,9 @@ pub(crate) enum Command {
         max_cpu_len_log: usize,
         #[arg(short, long, default_value_t = 2)]
         batch_size: usize,
+        /// If true, save the public inputs to disk on error.
+        #[arg(short, long, default_value_t = false)]
+        save_inputs_on_error: bool,
     },
     /// Reads input from HTTP and writes output to a directory.
     Http {
@@ -66,5 +72,8 @@ pub(crate) enum Command {
         max_cpu_len_log: usize,
         #[arg(short, long, default_value_t = 2)]
         batch_size: usize,
+        /// If true, save the public inputs to disk on error.
+        #[arg(short, long, default_value_t = false)]
+        save_inputs_on_error: bool,
     },
 }

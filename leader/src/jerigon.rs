@@ -4,10 +4,10 @@ use std::{
     path::PathBuf,
 };
 
+use alloy::providers::RootProvider;
 use anyhow::Result;
 use paladin::runtime::Runtime;
 use proof_gen::types::PlonkyProofIntern;
-use tracing::info;
 
 /// The main function for the jerigon mode.
 pub(crate) async fn jerigon_main(
@@ -19,17 +19,23 @@ pub(crate) async fn jerigon_main(
     previous: Option<PlonkyProofIntern>,
     proof_output_path_opt: Option<PathBuf>,
     batch_size: usize,
+    save_inputs_on_error: bool,
 ) -> Result<()> {
-    let prover_input = rpc::fetch_prover_input(rpc::FetchProverInputRequest {
-        rpc_url,
-        block_number,
-        checkpoint_block_number,
-    })
+    let prover_input = rpc::prover_input(
+        RootProvider::new_http(rpc_url.parse()?),
+        block_number.into(),
+        checkpoint_block_number.into(),
+    )
     .await?;
 
-    info!("got prover input");
     let proof = prover_input
-        .prove(&runtime, max_cpu_len, previous, batch_size)
+        .prove(
+            &runtime,
+            max_cpu_len,
+            previous,
+            batch_size,
+            save_inputs_on_error,
+        )
         .await;
     runtime.close().await?;
 
