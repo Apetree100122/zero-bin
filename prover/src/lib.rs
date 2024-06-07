@@ -38,7 +38,7 @@ impl ProverInput {
         previous: Option<PlonkyProofIntern>,
         batch_size: usize,
     ) -> Result<GeneratedBlockProof> {
-        use evm_arithmetization::prover::{generate_all_data_segments, GenerationSegmentData};
+        use evm_arithmetization::prover::generate_all_data_segments;
         use futures::{stream::FuturesUnordered, FutureExt};
         use ops::SegmentProof;
         use plonky2::field::goldilocks_field::GoldilocksField;
@@ -65,7 +65,7 @@ impl ProverInput {
             .enumerate()
             .map(|(idx, txn)| {
                 let generated_data = generate_all_data_segments::<F>(Some(max_cpu_len_log), &txn)
-                    .unwrap_or(vec![GenerationSegmentData::default()]);
+                    .expect("There should always at least one segment data.");
                 info!("generated data length {:?}", generated_data.len());
 
                 let cur_data: Vec<_> = generated_data
