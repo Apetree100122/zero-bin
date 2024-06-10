@@ -1373,14 +1373,18 @@ checksum = "0b6a852b24ab71dffc585bcb46eaf7959d175cb865a7152e35b348d1b2960422"
 name = "common"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "anyhow",
+ "async-stream",
  "clap",
  "evm_arithmetization",
+ "futures",
  "plonky2",
  "proof_gen",
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
  "trace_decoder",
  "tracing",
 ]
@@ -2786,6 +2790,7 @@ dependencies = [
  "clap",
  "common",
  "dotenvy",
+ "futures",
  "ops",
  "paladin-core",
  "proof_gen",
@@ -3738,6 +3743,7 @@ dependencies = [
  "proof_gen",
  "ruint",
  "serde",
+ "tokio",
  "trace_decoder",
  "tracing",
 ]

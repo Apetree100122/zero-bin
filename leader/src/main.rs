@@ -4,11 +4,12 @@ use std::{fs::File, path::PathBuf};
 use anyhow::Result;
 use clap::Parser;
 use cli::Command;
-use common::prover_state::TableLoadStrategy;
+use common::block_interval::BlockInterval;
 use dotenvy::dotenv;
 use ops::register;
 use paladin::runtime::Runtime;
-use proof_gen::types::PlonkyProofIntern;
+use proof_gen::proof_types::GeneratedBlockProof;
+use tracing::info;
 
 use crate::utils::get_package_version;
 
@@ -19,7 +20,7 @@ mod jerigon;
 mod stdio;
 mod utils;
 
-fn get_previous_proof(path: Option<PathBuf>) -> Result<Option<PlonkyProofIntern>> {
+fn get_previous_proof(path: Option<PathBuf>) -> Result<Option<GeneratedBlockProof>> {
     if path.is_none() {
         return Ok(None);
     }
@@ -27,7 +28,7 @@ fn get_previous_proof(path: Option<PathBuf>) -> Result<Option<PlonkyProofIntern>
     let path = path.unwrap();
     let file = File::open(path)?;
     let des = &mut serde_json::Deserializer::from_reader(&file);
-    let proof: PlonkyProofIntern = serde_path_to_error::deserialize(des)?;
+    let proof: GeneratedBlockProof = serde_path_to_error::deserialize(des)?;
     Ok(Some(proof))
 }
 
@@ -59,9 +60,6 @@ async fn main() -> Result<()> {
         // state here.
         args.prover_state_config
             .into_prover_state_manager()
-            // Use the monolithic load strategy for the prover state when running in
-            // emulation mode.
-            .with_load_strategy(TableLoadStrategy::Monolithic)
             .initialize()?;
     }
 
@@ -77,8 +75,8 @@ async fn main() -> Result<()> {
             let previous_proof = get_previous_proof(previous_proof)?;
             stdio::stdio_main(
                 runtime,
-                previous_proof,
                 max_cpu_len_log,
+                previous_proof,
                 batch_size,
                 save_inputs_on_error,
             )
@@ -113,25 +111,37 @@ async fn main() -> Result<()> {
         }
         Command::Jerigon {
             rpc_url,
-            block_number,
+            block_interval,
             checkpoint_block_number,
             previous_proof,
-            proof_output_path,
+            proof_output_dir,
             max_cpu_len_log,
             batch_size,
             save_inputs_on_error,
+            block_time,
         } => {
             let previous_proof = get_previous_proof(previous_proof)?;
+            let mut block_interval = BlockInterval::new(&block_interval)?;
+
+            if let BlockInterval::FollowFrom {
+                start_block: _,
+                block_time: ref mut block_time_opt,
+            } = block_interval
+            {
+                *block_time_opt = Some(block_time);
+            }
+
+            info!("Proving interval {block_interval}");
 
             jerigon::jerigon_main(
                 runtime,
                 &rpc_url,
-                block_number,
+                block_interval,
                 checkpoint_block_number,
                 max_cpu_len_log,
                 previous_proof,
-                proof_output_path,
                 batch_size,
+                proof_output_dir,
                 save_inputs_on_error,
             )
             .await?;

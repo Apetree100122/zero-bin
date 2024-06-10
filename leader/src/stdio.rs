@@ -2,14 +2,14 @@ use std::io::{Read, Write};
 
 use anyhow::Result;
 use paladin::runtime::Runtime;
-use proof_gen::types::PlonkyProofIntern;
-use prover::ProverInput;
+use proof_gen::proof_types::GeneratedBlockProof;
+use prover::BlockProverInput;
 
 /// The main function for the stdio mode.
 pub(crate) async fn stdio_main(
     runtime: Runtime,
-    previous: Option<PlonkyProofIntern>,
     max_cpu_len_log: usize,
+    previous: Option<GeneratedBlockProof>,
     batch_size: usize,
     save_inputs_on_error: bool,
 ) -> Result<()> {
@@ -17,12 +17,12 @@ pub(crate) async fn stdio_main(
     std::io::stdin().read_to_string(&mut buffer)?;
 
     let des = &mut serde_json::Deserializer::from_str(&buffer);
-    let input: ProverInput = serde_path_to_error::deserialize(des)?;
+    let input: BlockProverInput = serde_path_to_error::deserialize(des)?;
     let proof = input
         .prove(
             &runtime,
             max_cpu_len_log,
-            previous,
+            previous.map(futures::future::ok),
             batch_size,
             save_inputs_on_error,
         )
@@ -30,7 +30,7 @@ pub(crate) async fn stdio_main(
     runtime.close().await?;
     let proof = proof?;
 
-    std::io::stdout().write_all(&serde_json::to_vec(&proof.intern)?)?;
+    std::io::stdout().write_all(&serde_json::to_vec(&proof)?)?;
 
     Ok(())
 }
