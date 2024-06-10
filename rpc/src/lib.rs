@@ -121,6 +121,7 @@ where
         block_trace: BlockTrace {
             trie_pre_images: pre_images.pop().context("trace had no BlockWitness")?,
             txn_info,
+            code_db: None,
         },
         other_data: OtherBlockData {
             b_data: BlockLevelData {
