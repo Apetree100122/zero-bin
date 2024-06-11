@@ -60,7 +60,6 @@ impl ProverInput {
                     partial_next_data: None,
                     inputs: txn,
                     max_cpu_len_log: Some(max_cpu_len_log),
-                    nb_segments: 0,
                 };
 
                 Directive::map(IndexedStream::from(data_iterator), &SegmentProof)
