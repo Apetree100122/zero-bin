@@ -1,5 +1,5 @@
 use alloy::primitives::B256;
-use alloy::rpc::types::eth::BlockId;
+use alloy::rpc::types::BlockId;
 use alloy::{hex, providers::Provider, transports::Transport};
 use anyhow::{anyhow, Result};
 use async_stream::try_stream;

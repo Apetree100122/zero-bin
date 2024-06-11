@@ -1,6 +1,6 @@
 use std::io;
 
-use alloy::{providers::RootProvider, rpc::types::eth::BlockId};
+use alloy::{providers::RootProvider, rpc::types::BlockId};
 use clap::{Parser, ValueHint};
 use common::block_interval::BlockInterval;
 use tracing_subscriber::{prelude::*, EnvFilter};

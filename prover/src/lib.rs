@@ -9,6 +9,7 @@ use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
 };
+use proof_gen::proof_gen::generate_segment_agg_proof;
 use proof_gen::proof_types::GeneratedBlockProof;
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
@@ -46,6 +47,7 @@ impl BlockProverInput {
         use evm_arithmetization::prover::SegmentDataIterator;
         use futures::{stream::FuturesUnordered, FutureExt};
         use ops::SegmentProof;
+        use proof_gen::proof_types::SegmentAggregatableProof;
 
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
@@ -58,7 +60,6 @@ impl BlockProverInput {
         )?;
 
         // Generate segment data.
-        type F = GoldilocksField;
 
         let seg_ops = SegmentProof {
             save_inputs_on_error,

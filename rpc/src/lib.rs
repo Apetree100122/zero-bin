@@ -1,8 +1,8 @@
 use alloy::primitives::B256;
-use alloy::rpc::types::eth::BlockNumberOrTag;
+use alloy::rpc::types::BlockNumberOrTag;
 use alloy::{
     providers::Provider,
-    rpc::types::eth::{Block, BlockId, BlockTransactionsKind, Withdrawal},
+    rpc::types::{Block, BlockId, BlockTransactionsKind, Withdrawal},
     transports::Transport,
 };
 use anyhow::Context as _;
