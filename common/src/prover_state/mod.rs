@@ -241,6 +241,7 @@ impl ProverStateManager {
             is_dummy: _,
             proof_with_pis: intern,
             public_values: p_vals,
+            is_dummy: _,
         } = p_out;
 
         Ok(GeneratedSegmentProof { p_vals, intern })

@@ -43,13 +43,9 @@ impl BlockProverInput {
         save_inputs_on_error: bool,
     ) -> Result<GeneratedBlockProof> {
         use anyhow::Context as _;
-        use evm_arithmetization::prover::generate_all_data_segments;
+        use evm_arithmetization::prover::SegmentDataIterator;
         use futures::{stream::FuturesUnordered, FutureExt};
         use ops::SegmentProof;
-        use plonky2::field::goldilocks_field::GoldilocksField;
-        use proof_gen::{
-            proof_gen::generate_segment_agg_proof, proof_types::SegmentAggregatableProof,
-        };
 
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
@@ -77,16 +73,13 @@ impl BlockProverInput {
             .into_iter()
             .enumerate()
             .map(|(idx, txn)| {
-                let generated_data = generate_all_data_segments::<F>(Some(max_cpu_len_log), &txn)
-                    .expect("There should always at least one segment data.");
-                info!("generated data length {:?}", generated_data.len());
+                let data_iterator = SegmentDataIterator {
+                    partial_next_data: None,
+                    inputs: txn,
+                    max_cpu_len_log: Some(max_cpu_len_log),
+                };
 
-                let cur_data: Vec<_> = generated_data
-                    .into_iter()
-                    .map(|d| (txn.clone(), d))
-                    .collect();
-
-                Directive::map(IndexedStream::from(cur_data), &seg_ops)
+                Directive::map(IndexedStream::from(data_iterator), &seg_ops)
                     .fold(&agg_ops)
                     .run(runtime)
                     .map(move |e| {
