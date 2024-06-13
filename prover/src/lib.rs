@@ -61,26 +61,38 @@ impl BlockProverInput {
 
         // Generate segment data.
 
-        let seg_ops = SegmentProof {
-            save_inputs_on_error,
-        };
-
         let agg_ops = ops::SegmentAggProof {
             save_inputs_on_error,
         };
 
+        let all_seg_proofs = txs
+            .into_iter()
+            .map(|txn| SegmentProof {
+                save_inputs_on_error,
+                inputs: txn,
+            })
+            .collect::<Vec<_>>();
+
+        let all_seg_proof_ops_with_it = all_seg_proofs
+            .iter()
+            .map(|txn_seg| {
+                (
+                    txn_seg,
+                    SegmentDataIterator {
+                        partial_next_data: None,
+                        inputs: &txn_seg.inputs,
+                        max_cpu_len_log: Some(max_cpu_len_log),
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+
         // Map the transactions to a stream of transaction proofs.
-        let tx_proof_futs: FuturesUnordered<_> = txs
+        let tx_proof_futs: FuturesUnordered<_> = all_seg_proof_ops_with_it
             .into_iter()
             .enumerate()
-            .map(|(idx, txn)| {
-                let data_iterator = SegmentDataIterator {
-                    partial_next_data: None,
-                    inputs: txn,
-                    max_cpu_len_log: Some(max_cpu_len_log),
-                };
-
-                Directive::map(IndexedStream::from(data_iterator), &seg_ops)
+            .map(|(idx, (seg_ops, data_iterator))| {
+                Directive::map(IndexedStream::from(data_iterator), seg_ops)
                     .fold(&agg_ops)
                     .run(runtime)
                     .map(move |e| {

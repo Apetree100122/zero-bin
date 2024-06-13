@@ -59,7 +59,7 @@ checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
 [[package]]
 name = "alloy"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-consensus",
  "alloy-core",
@@ -76,9 +76,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-chains"
-version = "0.1.18"
+version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03fd095a9d70f4b1c5c102c84a4c782867a5c6416dbf6dcd42a63e7c7a89d3c8"
+checksum = "24ceb48af11349cd7fbd12aa739800be3c4b3965f640b7ae26666907f3bdf091"
 dependencies = [
  "num_enum",
  "strum",
@@ -87,7 +87,7 @@ dependencies = [
 [[package]]
 name = "alloy-consensus"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-eips",
  "alloy-primitives",
@@ -129,7 +129,7 @@ dependencies = [
 [[package]]
 name = "alloy-eips"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
@@ -143,7 +143,7 @@ dependencies = [
 [[package]]
 name = "alloy-genesis"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-primitives",
  "alloy-serde",
@@ -166,7 +166,7 @@ dependencies = [
 [[package]]
 name = "alloy-json-rpc"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-primitives",
  "serde",
@@ -178,7 +178,7 @@ dependencies = [
 [[package]]
 name = "alloy-network"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -218,7 +218,7 @@ dependencies = [
 [[package]]
 name = "alloy-provider"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-chains",
  "alloy-consensus",
@@ -272,7 +272,7 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-client"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-json-rpc",
  "alloy-transport",
@@ -292,7 +292,7 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-types"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-rpc-types-eth",
  "alloy-serde",
@@ -301,7 +301,7 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-types-eth"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -319,7 +319,7 @@ dependencies = [
 [[package]]
 name = "alloy-rpc-types-trace"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-primitives",
  "alloy-rpc-types-eth",
@@ -331,7 +331,7 @@ dependencies = [
 [[package]]
 name = "alloy-serde"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-primitives",
  "serde",
@@ -341,7 +341,7 @@ dependencies = [
 [[package]]
 name = "alloy-signer"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-primitives",
  "async-trait",
@@ -422,7 +422,7 @@ dependencies = [
 [[package]]
 name = "alloy-transport"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-json-rpc",
  "base64",
@@ -439,7 +439,7 @@ dependencies = [
 [[package]]
 name = "alloy-transport-http"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/alloy#14ed25d8ab485fc0d313fd1e055862c9d20ef273"
+source = "git+https://github.com/alloy-rs/alloy#fb875f2c3614e878f0ece14589008cb63faae779"
 dependencies = [
  "alloy-json-rpc",
  "alloy-transport",
@@ -935,9 +935,9 @@ checksum = "0c4b4d0bd25bd0b74681c0ad21497610ce1b7c91b1022cd21c80c6fbdd9476b0"
 
 [[package]]
 name = "aws-lc-rs"
-version = "1.7.2"
+version = "1.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "474d7cec9d0a1126fad1b224b767fcbf351c23b0309bb21ec210bcfd379926a5"
+checksum = "bf7d844e282b4b56750b2d4e893b2205581ded8709fddd2b6aa5418c150ca877"
 dependencies = [
  "aws-lc-sys",
  "mirai-annotations",
@@ -947,9 +947,9 @@ dependencies = [
 
 [[package]]
 name = "aws-lc-sys"
-version = "0.17.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7505fc3cb7acbf42699a43a79dd9caa4ed9e99861dfbb837c5c0fb5a0a8d2980"
+checksum = "c3a2c29203f6bf296d01141cc8bb9dbd5ecd4c27843f2ee0767bcd5985a927da"
 dependencies = [
  "bindgen",
  "cc",
@@ -1031,9 +1031,9 @@ dependencies = [
 
 [[package]]
 name = "backtrace"
-version = "0.3.72"
+version = "0.3.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17c6a35df3749d2e8bb1b7b21a976d82b15548788d2735b9d82f329268f71a11"
+checksum = "5cc23269a4f8976d0a4d2e7109211a419fe30e8d88d677cd60b6bc79c5732e0a"
 dependencies = [
  "addr2line",
  "cc",
@@ -1921,7 +1921,7 @@ dependencies = [
 [[package]]
 name = "evm_arithmetization"
 version = "0.1.3"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#87fa930a8b77f3692d235a35832c3e89295f5177"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#1380841267bdd0085531eb4bbd1d82b2dc291c37"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2387,9 +2387,9 @@ dependencies = [
 
 [[package]]
 name = "httparse"
-version = "1.9.2"
+version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f3935c160d00ac752e09787e6e6bfc26494c2183cc922f1bc678a60d4733bc2"
+checksum = "d0e7a4dd27b9476dc40cb050d3632d3bba3a70ddbff012285f7f8559a1e7e545"
 
 [[package]]
 name = "httpdate"
@@ -3081,7 +3081,7 @@ checksum = "c9be0862c1b3f26a88803c4a49de6889c10e608b3ee9344e6ef5b45fb37ad3d1"
 [[package]]
 name = "mpt_trie"
 version = "0.2.1"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#87fa930a8b77f3692d235a35832c3e89295f5177"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#1380841267bdd0085531eb4bbd1d82b2dc291c37"
 dependencies = [
  "bytes",
  "enum-as-inner",
@@ -3253,9 +3253,9 @@ dependencies = [
 
 [[package]]
 name = "object"
-version = "0.35.0"
+version = "0.36.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8ec7ab813848ba4522158d5517a6093db1ded27575b070f4177b8d12b41db5e"
+checksum = "576dfe1fc8f9df304abb159d767a29d0476f7750fbf8aa7ad07816004a207434"
 dependencies = [
  "memchr",
 ]
@@ -3830,7 +3830,7 @@ dependencies = [
 [[package]]
 name = "proof_gen"
 version = "0.1.3"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#87fa930a8b77f3692d235a35832c3e89295f5177"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#1380841267bdd0085531eb4bbd1d82b2dc291c37"
 dependencies = [
  "ethereum-types",
  "evm_arithmetization",
@@ -5070,7 +5070,7 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 [[package]]
 name = "trace_decoder"
 version = "0.3.1"
-source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#87fa930a8b77f3692d235a35832c3e89295f5177"
+source = "git+https://github.com/0xPolygonZero/zk_evm.git?branch=no_dummy_segment_no_pis#1380841267bdd0085531eb4bbd1d82b2dc291c37"
 dependencies = [
  "bytes",
  "ciborium",

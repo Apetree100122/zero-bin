@@ -22,6 +22,7 @@ registry!();
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct SegmentProof {
     pub save_inputs_on_error: bool,
+    pub inputs: GenerationInputs,
 }
 
 #[cfg(not(feature = "test_only"))]
