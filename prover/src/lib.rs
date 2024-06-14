@@ -2,14 +2,12 @@ use std::future::Future;
 
 use alloy::primitives::U256;
 use anyhow::Result;
-use common::prover_state::p_state;
 use futures::{future::BoxFuture, stream::FuturesOrdered, FutureExt, TryFutureExt, TryStreamExt};
 use num_traits::ToPrimitive as _;
 use paladin::{
     directive::{Directive, IndexedStream},
     runtime::Runtime,
 };
-use proof_gen::proof_gen::generate_segment_agg_proof;
 use proof_gen::proof_types::GeneratedBlockProof;
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
@@ -46,8 +44,6 @@ impl BlockProverInput {
         use anyhow::Context as _;
         use evm_arithmetization::prover::SegmentDataIterator;
         use futures::{stream::FuturesUnordered, FutureExt};
-        use ops::SegmentProof;
-        use proof_gen::proof_types::SegmentAggregatableProof;
 
         let block_number = self.get_block_number();
         info!("Proving block {block_number}");
@@ -60,63 +56,30 @@ impl BlockProverInput {
         )?;
 
         // Generate segment data.
-
         let agg_ops = ops::SegmentAggProof {
             save_inputs_on_error,
         };
 
-        let all_seg_proofs = txs
-            .into_iter()
-            .map(|txn| SegmentProof {
-                save_inputs_on_error,
-                inputs: txn,
-            })
-            .collect::<Vec<_>>();
-
-        let all_seg_proof_ops_with_it = all_seg_proofs
-            .iter()
-            .map(|txn_seg| {
-                (
-                    txn_seg,
-                    SegmentDataIterator {
-                        partial_next_data: None,
-                        inputs: &txn_seg.inputs,
-                        max_cpu_len_log: Some(max_cpu_len_log),
-                    },
-                )
-            })
-            .collect::<Vec<_>>();
+        let seg_ops = ops::SegmentProof {
+            save_inputs_on_error,
+        };
 
         // Map the transactions to a stream of transaction proofs.
-        let tx_proof_futs: FuturesUnordered<_> = all_seg_proof_ops_with_it
-            .into_iter()
+        let tx_proof_futs: FuturesUnordered<_> = txs
+            .iter()
             .enumerate()
-            .map(|(idx, (seg_ops, data_iterator))| {
-                Directive::map(IndexedStream::from(data_iterator), seg_ops)
+            .map(|(idx, txn)| {
+                let data_iterator = SegmentDataIterator {
+                    partial_next_data: None,
+                    inputs: txn,
+                    max_cpu_len_log: Some(max_cpu_len_log),
+                };
+
+                Directive::map(IndexedStream::from(data_iterator), &seg_ops)
                     .fold(&agg_ops)
                     .run(runtime)
                     .map(move |e| {
-                        e.map(|p| match p {
-                            SegmentAggregatableProof::Agg(_) => {
-                                (idx, proof_gen::proof_types::TxnAggregatableProof::from(p))
-                            }
-                            SegmentAggregatableProof::Seg(seg) => {
-                                let segment_proof = seg.into();
-                                let single_aggreg = generate_segment_agg_proof(
-                                    p_state(),
-                                    &segment_proof,
-                                    &segment_proof,
-                                    true,
-                                )
-                                .expect("Single-segment aggregation failed?");
-                                (
-                                    idx,
-                                    proof_gen::proof_types::TxnAggregatableProof::from(
-                                        single_aggreg,
-                                    ),
-                                )
-                            }
-                        })
+                        e.map(|p| (idx, proof_gen::proof_types::TxnAggregatableProof::from(p)))
                     })
             })
             .collect();

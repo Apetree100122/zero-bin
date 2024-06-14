@@ -22,7 +22,6 @@ registry!();
 #[derive(Deserialize, Serialize, RemoteExecute)]
 pub struct SegmentProof {
     pub save_inputs_on_error: bool,
-    pub inputs: GenerationInputs,
 }
 
 #[cfg(not(feature = "test_only"))]
@@ -210,6 +209,7 @@ pub struct TxnAggProof {
 }
 fn get_agg_proof_public_values(elem: TxnAggregatableProof) -> PublicValues {
     match elem {
+        TxnAggregatableProof::Segment(info) => info.p_vals,
         TxnAggregatableProof::Txn(info) => info.p_vals,
         TxnAggregatableProof::Agg(info) => info.p_vals,
     }
@@ -219,11 +219,37 @@ impl Monoid for TxnAggProof {
     type Elem = TxnAggregatableProof;
 
     fn combine(&self, a: Self::Elem, b: Self::Elem) -> Result<Self::Elem> {
-        let result = generate_transaction_agg_proof(p_state(), &a, &b).map_err(|e| {
+        let lhs = match a {
+            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
+                generate_segment_agg_proof(
+                    p_state(),
+                    &SegmentAggregatableProof::from(segment.clone()),
+                    &SegmentAggregatableProof::from(segment),
+                    true,
+                )
+                .map_err(FatalError::from)?,
+            ),
+            _ => a,
+        };
+
+        let rhs = match b {
+            TxnAggregatableProof::Segment(segment) => TxnAggregatableProof::from(
+                generate_segment_agg_proof(
+                    p_state(),
+                    &SegmentAggregatableProof::from(segment.clone()),
+                    &SegmentAggregatableProof::from(segment),
+                    true,
+                )
+                .map_err(FatalError::from)?,
+            ),
+            _ => b,
+        };
+
+        let result = generate_transaction_agg_proof(p_state(), &lhs, &rhs).map_err(|e| {
             if self.save_inputs_on_error {
                 let pv = vec![
-                    get_agg_proof_public_values(a),
-                    get_agg_proof_public_values(b),
+                    get_agg_proof_public_values(lhs),
+                    get_agg_proof_public_values(rhs),
                 ];
                 if let Err(write_err) = save_inputs_to_disk(
                     format!(
