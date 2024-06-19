@@ -1,5 +1,13 @@
 # Zero Bin
 
+## Archive note
+
+All this workspace has been moved into https://github.com/0xPolygonZero/zk_evm.
+
+Please refer to this new location for inquiries or contributions.
+
+---
+
 A composition of [`paladin`](https://github.com/0xPolygonZero/paladin) and [`plonky-block-proof-gen`](https://github.com/0xPolygonZero/plonky-block-proof-gen). Given the [proof generation protocol](/prover/src/lib.rs) as input, generate a proof. The project is instrumented with [`paladin`](https://github.com/0xPolygonZero/paladin), and as such can distribute proof generation across multiple worker machines.
 
 - [Zero Bin](#zero-bin)
