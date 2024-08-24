@@ -1,7 +1,6 @@
 [workspace]
 members = ["leader", "worker", "common", "ops", "verifier", "rpc", "prover"]
 resolver = "2"
-
 [workspace.dependencies]
 paladin-core = "0.4.2"
 anyhow = { version = "1.0.75", features = ["backtrace"] }
@@ -29,16 +28,12 @@ alloy = { git = "https://github.com/alloy-rs/alloy", tag='v0.1.1', default-featu
     "transports",
     "transport-http",
     "rpc-types-debug"
-] }
-
-
-# zk-evm dependencies
+] } # zk-evm dependencies
 plonky2 = "0.2.2"
 evm_arithmetization = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.4.0" }
 mpt_trie = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.4.0" }
 trace_decoder = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.4.0" }
 proof_gen = { git = "https://github.com/0xPolygonZero/zk_evm.git", tag = "v0.4.0" }
-
 [workspace.package]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -46,7 +41,6 @@ repository = "https://github.com/0xPolygonZero/zero-bin"
 authors = ["Polygon Zero <zbrown@polygon.technology>"]
 keywords = ["cryptography", "SNARK", "PLONK", "FRI", "plonky2"]
 categories = ["cryptography::cryptocurrencies"]
-
 [profile.release]
 opt-level = 3
 incremental = true
